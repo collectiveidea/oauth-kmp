@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OAuthKMP"
+rootProject.name = "oauth-kmp"
 include(":shared")
