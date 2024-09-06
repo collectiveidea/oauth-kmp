@@ -1,5 +1,5 @@
 plugins {
-    //trick: for the same plugin versions in all sub-modules
+    // trick: for the same plugin versions in all sub-modules
     alias(libs.plugins.androidLibrary).apply(false)
     alias(libs.plugins.kotlinMultiplatform).apply(false)
     alias(libs.plugins.kotlinSerialization).apply(false)
@@ -24,7 +24,7 @@ val sonatypeUsername = gradlePropertyOrEnvironmentVariable("SONATYPE_USERNAME")
 val sonatypePassword = gradlePropertyOrEnvironmentVariable("SONATYPE_PASSWORD")
 if (sonatypeUsername != null) {
     subprojects {
-        plugins.withType<MavenPublishPlugin>() {
+        plugins.withType<MavenPublishPlugin> {
             configure<PublishingExtension> {
                 repositories {
                     maven {

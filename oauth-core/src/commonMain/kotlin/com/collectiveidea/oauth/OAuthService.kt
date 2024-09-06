@@ -14,7 +14,11 @@ public interface OAuthService {
      * @param redirectUrl The original `redirect_uri` that was included as a sign-in URL query parameter.
      */
     @Throws(OAuthException::class, CancellationException::class)
-    public suspend fun exchangeAuthorizationCode(code: String, verifier: String, redirectUrl: String): TokenResponse
+    public suspend fun exchangeAuthorizationCode(
+        code: String,
+        verifier: String,
+        redirectUrl: String,
+    ): TokenResponse
 
     /**
      * Meant to be called when an access_token is no longer value, to get new access/refresh tokens.

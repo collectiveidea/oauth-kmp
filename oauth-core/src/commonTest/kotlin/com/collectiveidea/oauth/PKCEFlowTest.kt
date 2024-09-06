@@ -262,7 +262,7 @@ class PKCEFlowTest {
     fun `flow reports error message when server rejects authorization code`() = runTest {
         val pkceFlow = PKCEFlow(
             TestPlatformPKCEFlow(
-                automaticallyInvokeCompletionCallback = true
+                automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
                 MockEngine {
@@ -309,6 +309,7 @@ class PKCEFlowTest {
             )
 
             assertEquals(
+                @Suppress("ktlint:standard:max-line-length")
                 PKCEFlow.PKCEAuthState(
                     state = PKCEFlow.PKCEAuthState.State.FINISHED,
                     tokenResponse = null,
@@ -325,7 +326,7 @@ class PKCEFlowTest {
     fun `flow reports error message when authorization code fails`() = runTest {
         val pkceFlow = PKCEFlow(
             TestPlatformPKCEFlow(
-                automaticallyInvokeCompletionCallback = true
+                automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
                 MockEngine {

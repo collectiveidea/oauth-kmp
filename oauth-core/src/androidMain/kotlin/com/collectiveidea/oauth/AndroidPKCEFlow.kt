@@ -5,8 +5,14 @@ import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
 
-public class AndroidPKCEFlow(private val context: Context): PlatformPKCEFlow {
-    override fun startSignIn(signInUrl: String, redirectUrl: String, completionHandler: (String?, String?) -> Unit) {
+public class AndroidPKCEFlow(
+    private val context: Context,
+) : PlatformPKCEFlow {
+    override fun startSignIn(
+        signInUrl: String,
+        redirectUrl: String,
+        completionHandler: (String?, String?) -> Unit,
+    ) {
         // NOTE: Android is unable to directly invoke the completionHandler to process the
         // callback URL when the external web browser transfers control back to the app.
 
