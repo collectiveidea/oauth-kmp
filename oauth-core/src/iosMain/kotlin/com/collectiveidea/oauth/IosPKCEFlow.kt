@@ -9,31 +9,35 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.darwin.NSObject
 
-public class IosPKCEFlow: PlatformPKCEFlow {
-    override fun startSignIn(signInUrl: String, redirectUrl: String, completionHandler: (String?, String?) -> Unit) {
+public class IosPKCEFlow : PlatformPKCEFlow {
+    override fun startSignIn(
+        signInUrl: String,
+        redirectUrl: String,
+        completionHandler: (String?, String?) -> Unit,
+    ) {
         val authSession = ASWebAuthenticationSession(
             uRL = NSURL.URLWithString(signInUrl)!!,
             callbackURLScheme = NSURL.URLWithString(redirectUrl)!!.scheme,
             completionHandler = object : ASWebAuthenticationSessionCompletionHandler {
-                override fun invoke(callbackUrl: NSURL?, error: NSError?) {
+                override fun invoke(
+                    callbackUrl: NSURL?,
+                    error: NSError?,
+                ) {
                     completionHandler(
                         callbackUrl?.absoluteString,
-                        error?.localizedDescription
+                        error?.localizedDescription,
                     )
                 }
-            }
+            },
         )
 
         authSession.presentationContextProvider = object : NSObject(), ASWebAuthenticationPresentationContextProvidingProtocol {
             // https://developer.apple.com/documentation/authenticationservices/aswebauthenticationpresentationcontextproviding/presentationanchor(for:)?language=objc
-            override fun presentationAnchorForWebAuthenticationSession(session: ASWebAuthenticationSession): ASPresentationAnchor {
-                return UIApplication.sharedApplication.keyWindow ?: ASPresentationAnchor()
-            }
+            override fun presentationAnchorForWebAuthenticationSession(session: ASWebAuthenticationSession): ASPresentationAnchor =
+                UIApplication.sharedApplication.keyWindow ?: ASPresentationAnchor()
         }
 
         authSession.prefersEphemeralWebBrowserSession = true
         authSession.start()
     }
-
-
 }

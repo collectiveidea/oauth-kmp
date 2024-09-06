@@ -24,7 +24,11 @@ public class OAuthServiceImpl(
     private val httpClient: HttpClient,
     override val clientId: String,
 ) : OAuthService {
-    override suspend fun exchangeAuthorizationCode(code: String, verifier: String, redirectUrl: String): TokenResponse {
+    override suspend fun exchangeAuthorizationCode(
+        code: String,
+        verifier: String,
+        redirectUrl: String,
+    ): TokenResponse {
         val response: HttpResponse = httpClient.post("oauth/token") {
             setBody(
                 AuthorizationCodeRequest(
