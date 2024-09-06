@@ -20,7 +20,7 @@ import io.ktor.client.statement.HttpResponse
  *    back to the native application. On successful auth, the URL will have a "code" query parameter
  *    appended that can be exchanged for access/refresh tokens via exchangeAuthorizationCode.
  */
-class OAuthServiceImpl(
+public class OAuthServiceImpl(
     private val httpClient: HttpClient,
     override val clientId: String,
 ) : OAuthService {

@@ -15,7 +15,7 @@ import kotlin.random.Random
  *
  * @see [RFC-7636](https://datatracker.ietf.org/doc/html/rfc7636)
  */
-class PKCEUtil(
+internal class PKCEUtil(
     private val random: Random = SecureRandom(),
 ) {
     /**

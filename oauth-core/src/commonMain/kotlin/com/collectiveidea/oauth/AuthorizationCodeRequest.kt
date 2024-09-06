@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AuthorizationCodeRequest(
+public data class AuthorizationCodeRequest(
     @SerialName("client_id") val clientId: String,
     @SerialName("grant_type") val grantType: String = "authorization_code",
     @SerialName("code") val code: String,

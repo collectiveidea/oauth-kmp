@@ -9,9 +9,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-val jsonDecoder = Json
-
 class OAuthServiceTest {
+    private val jsonDecoder = Json
+
     @Test
     fun `exchangeAuthorizationCode success`() = runTest {
         val mockEngine = MockEngine {

@@ -1,6 +1,6 @@
 package com.collectiveidea.oauth
 
-interface PlatformPKCEFlow {
+public interface PlatformPKCEFlow {
     /**
      * Starts the PKCE OAuth flow in a platform-native external browser session.
      *
@@ -18,7 +18,7 @@ interface PlatformPKCEFlow {
      *  Android will not invoke the completionHandler; It must be called in `onNewIntent` once
      *  the platform transfer control back to the app Activity via the redirectUrl.
      */
-    fun startSignIn(
+    public fun startSignIn(
         signInUrl: String,
         redirectUrl: String,
         completionHandler: (String?, String?) -> Unit,

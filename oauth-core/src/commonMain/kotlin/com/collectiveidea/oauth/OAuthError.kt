@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class OAuthError(
+public data class OAuthError(
     @SerialName("error") val code: String,
     @SerialName("error_description") val description: String,
 )

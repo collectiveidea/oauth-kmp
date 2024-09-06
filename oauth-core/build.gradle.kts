@@ -9,6 +9,8 @@ plugins {
 }
 
 kotlin {
+    explicitApi()
+
     androidTarget {
         publishAllLibraryVariants()
     }

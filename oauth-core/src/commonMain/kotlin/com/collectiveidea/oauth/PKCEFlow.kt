@@ -6,6 +6,7 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,23 +32,23 @@ import kotlin.random.Random
  * @param random This should _always_ be `SecureRandom()`, but we allow constructor injection here in order
  *  to control the randomization values generated under test.
  */
-class PKCEFlow(
+public class PKCEFlow(
     private val platformPKCEFlow: PlatformPKCEFlow,
     private val oauthService: OAuthService,
-    val oauthBaseUrl: String,
-    val redirectUrl: String,
+    private val oauthBaseUrl: String,
+    private val redirectUrl: String,
     private val externalScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     private val random: Random = SecureRandom(),
 ) {
     private val pkce by lazy { PKCEUtil(random) }
 
-    data class PKCEAuthState(
+    public data class PKCEAuthState(
         val state: State = State.NOT_STARTED,
         val tokenResponse: TokenResponse? = null,
         val errorMessage: String? = null,
     ) {
-        enum class State {
+        public enum class State {
             NOT_STARTED,
             WAITING_FOR_AUTHORIZATION_CODE,
             EXCHANGING_AUTHORIZATION_CODE,
@@ -56,7 +57,7 @@ class PKCEFlow(
     }
 
     private val _authState = MutableStateFlow(PKCEAuthState())
-    val authState = _authState.asStateFlow()
+    public val authState: StateFlow<PKCEAuthState> = _authState.asStateFlow()
 
     private var verifier: String? = null
 
@@ -96,7 +97,7 @@ class PKCEFlow(
      * Main entry point for the PKCE Flow. Transfers control of the auth process to the platform,
      * which opens the external browser to the appropriate sign in URL.
      */
-    fun startSignIn() {
+    public fun startSignIn() {
         _authState.update {
             PKCEAuthState(PKCEAuthState.State.WAITING_FOR_AUTHORIZATION_CODE)
         }
@@ -110,7 +111,7 @@ class PKCEFlow(
      * in turn needs to transfer control back here to process the callback URL to swap the
      * authorization code for access/refresh tokens.
      */
-    fun continueSignInWithCallbackOrError(
+    public fun continueSignInWithCallbackOrError(
         callbackUrl: String?,
         errorMessage: String?,
     ) {
@@ -180,7 +181,7 @@ class PKCEFlow(
      * Resets the auth state back to NOT_STARTED. Typically called after encountering
      * a FINISHED state to clear the token response from memory.
      */
-    fun resetState() {
+    public fun resetState() {
         verifier = null
 
         _authState.update { PKCEAuthState() }

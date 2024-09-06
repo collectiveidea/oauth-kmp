@@ -17,7 +17,7 @@ import io.ktor.serialization.kotlinx.json.json
  * @param baseUrl The base URL of the JSON OAuth service, everything before `/oauth/<verb>` in
  *  the URL, and with a trailing slash: e.g. `https://www.example.com/path/`
  */
-fun HttpClientConfig<*>.installJsonOAuth(baseUrl: String) {
+public fun HttpClientConfig<*>.installJsonOAuth(baseUrl: String) {
     expectSuccess = true
 
     defaultRequest {
@@ -50,6 +50,6 @@ fun HttpClientConfig<*>.installJsonOAuth(baseUrl: String) {
     }
 }
 
-fun ContentType.isJson() = match(ContentType.Application.Json)
+internal fun ContentType.isJson() = match(ContentType.Application.Json)
 
-fun HttpResponse.isJson() = contentType()?.isJson() == true
+internal fun HttpResponse.isJson() = contentType()?.isJson() == true
