@@ -2,12 +2,15 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
     `maven-publish`
     signing
 }
 
 kotlin {
+    explicitApi()
+
     androidTarget {
         publishAllLibraryVariants()
     }
@@ -25,10 +28,29 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            implementation(libs.kotlinx.coroutines.core)
+
+            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.krypt.csprng)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+
+            implementation(libs.okio)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
+
+            implementation(libs.turbine)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.browser)
         }
     }
 }

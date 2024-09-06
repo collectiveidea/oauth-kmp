@@ -11,6 +11,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        // For krypt SecureRandom
+        maven { url = uri("https://repo.repsy.io/mvn/chrynan/public") }
     }
 }
 
