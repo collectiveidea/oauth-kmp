@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+ * Update dependencies. See [#5](https://github.com/collectiveidea/oauth-kmp/pull/5).
+   * ktor to 3.0.1
+   * okio to 3.9.1
+   * kotlinx-serialization to 1.7.3
+   * kotlinx-coroutines to 1.9.0
+   * Kotlin to 2.0.21
+
 ## [0.1.0] - 2024-09-06
 
 Initial Release
