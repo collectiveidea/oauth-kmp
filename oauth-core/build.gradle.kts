@@ -12,7 +12,7 @@ kotlin {
     explicitApi()
 
     androidTarget {
-        publishAllLibraryVariants()
+        publishLibraryVariants("release")
     }
 
     listOf(
