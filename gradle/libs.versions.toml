@@ -1,17 +1,17 @@
 [versions]
-kotlin = "2.0.21"
+kotlin = "2.2.20"
 
 # Shared
-kotlinx-coroutines = "1.9.0"
-kotlinx-serialization = "1.7.3"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.9.0"
 krypt = "0.3.1" # For SecureRandom - https://github.com/chRyNaN/krypt
-ktor = "3.0.1"
-okio = "3.9.1" # For SHA-256 and Base64
-turbine = "1.1.0"
+ktor = "3.3.1"
+okio = "3.16.2" # For SHA-256 and Base64
+turbine = "1.2.1"
 
 # Android
-agp = "8.5.2"
-androidx-browser = "1.8.0" # For CustomTabs
+agp = "8.13.0"
+androidx-browser = "1.9.0" # For CustomTabs
 
 
 [libraries]
