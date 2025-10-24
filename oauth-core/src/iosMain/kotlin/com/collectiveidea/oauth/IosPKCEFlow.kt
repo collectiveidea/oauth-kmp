@@ -3,8 +3,6 @@ package com.collectiveidea.oauth
 import platform.AuthenticationServices.ASPresentationAnchor
 import platform.AuthenticationServices.ASWebAuthenticationPresentationContextProvidingProtocol
 import platform.AuthenticationServices.ASWebAuthenticationSession
-import platform.AuthenticationServices.ASWebAuthenticationSessionCompletionHandler
-import platform.Foundation.NSError
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.darwin.NSObject
@@ -18,16 +16,11 @@ public class IosPKCEFlow : PlatformPKCEFlow {
         val authSession = ASWebAuthenticationSession(
             uRL = NSURL.URLWithString(signInUrl)!!,
             callbackURLScheme = NSURL.URLWithString(redirectUrl)!!.scheme,
-            completionHandler = object : ASWebAuthenticationSessionCompletionHandler {
-                override fun invoke(
-                    callbackUrl: NSURL?,
-                    error: NSError?,
-                ) {
-                    completionHandler(
-                        callbackUrl?.absoluteString,
-                        error?.localizedDescription,
-                    )
-                }
+            completionHandler = { callbackUrl, error ->
+                completionHandler(
+                    callbackUrl?.absoluteString,
+                    error?.localizedDescription,
+                )
             },
         )
 
