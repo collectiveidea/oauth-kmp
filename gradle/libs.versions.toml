@@ -10,7 +10,7 @@ okio = "3.9.1" # For SHA-256 and Base64
 turbine = "1.1.0"
 
 # Android
-agp = "8.5.2"
+agp = "8.13.0"
 androidx-browser = "1.8.0" # For CustomTabs
 
 
