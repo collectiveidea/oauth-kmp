@@ -6,7 +6,7 @@ kotlinx-coroutines = "1.9.0"
 kotlinx-serialization = "1.9.0"
 krypt = "0.3.1" # For SecureRandom - https://github.com/chRyNaN/krypt
 ktor = "3.3.1"
-okio = "3.9.1" # For SHA-256 and Base64
+okio = "3.16.2" # For SHA-256 and Base64
 turbine = "1.1.0"
 
 # Android
