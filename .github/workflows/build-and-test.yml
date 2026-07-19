@@ -40,11 +40,11 @@ jobs:
         run: ./gradlew build
 
       - name: Test
-        run: ./gradlew test
+        run: ./gradlew testAndroidHostTest
 
       - name: Archive Runtime Test Report
         if: success() || failure() # Allow canceling per https://stackoverflow.com/a/73015952
         uses: actions/upload-artifact@v4
         with:
-          name: testReleaseUnitTest report
-          path: oauth-core/build/reports/tests/testReleaseUnitTest
+          name: testAndroidHostTest report
+          path: oauth-core/build/reports/tests/testAndroidHostTest

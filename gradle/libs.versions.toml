@@ -10,7 +10,7 @@ okio = "3.17.0" # For SHA-256 and Base64
 turbine = "1.2.1"
 
 # Android
-agp = "8.13.0"
+agp = "9.3.0"
 androidx-browser = "1.10.0" # For CustomTabs
 
 
@@ -32,6 +32,6 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine"}
 androidx-browser = { module = "androidx.browser:browser", version.ref = "androidx-browser" }
 
 [plugins]
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

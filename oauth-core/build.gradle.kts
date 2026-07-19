@@ -1,18 +1,30 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     `maven-publish`
     signing
 }
 
 kotlin {
     explicitApi()
+    jvmToolchain(24)
 
-    androidTarget {
-        publishLibraryVariants("release")
+    // The Android target is configured through the Android-KMP library plugin's nested
+    // `android {}` block instead of the deprecated com.android.library plugin + a top-level
+    // `android {}` block + `androidTarget()`. This plugin publishes a single Android variant,
+    // so `publishLibraryVariants(...)` is no longer needed.
+    android {
+        namespace = "com.collectiveidea.oauth"
+        compileSdk = 36
+        minSdk = 23
+
+        // Opt in to JVM host unit tests so commonTest still runs on the Android/JVM host,
+        // as `:oauth-core:testAndroidHostTest`.
+        withHostTestBuilder {}
     }
 
     listOf(
@@ -55,23 +67,14 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.collectiveidea.oauth"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 23
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
+// Compile with the JDK 24 toolchain but emit Java 11 bytecode, so consumers only need a
+// JDK 11+ toolchain to build against the published library. (The toolchain stays at 24
+// because some dependencies ship Java 17 bytecode that an older toolchain can't read.)
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
-    compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
-}
-
-val javadocJar by tasks.registering(Jar::class) {
+val javadocJar = tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
 }
 
