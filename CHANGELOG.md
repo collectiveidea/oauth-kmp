@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 * Bump ktlint to 1.8.0. See [#10](https://github.com/collectiveidea/oauth-kmp/pull/10).
+* Update dependencies. See [#11](https://github.com/collectiveidea/oauth-kmp/pull/11).
+  * Kotlin to 2.4.10
+  * AGP to 9.3.0 / Gradle to 9.6.1
+  * Ktor to 3.5.1
+  * kotlinx-serialization to 1.11.0
+  * kotlinx-coroutines to 1.11.0
+  * okio to 3.17.0
+  * androidx-browser to 1.10.0
+  * Adopt the Android Kotlin Multiplatform library plugin. The published library now
+    emits Java 11 bytecode (build against it with a JDK 11+ toolchain) and its Android
+    artifact is a single variant. The minimum iOS deployment target is now 15 (Kotlin 2.4).
 
 ## [0.1.2] - 2025-10-24
 
