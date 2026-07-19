@@ -1,17 +1,17 @@
 [versions]
-kotlin = "2.2.20"
+kotlin = "2.4.10"
 
 # Shared
-kotlinx-coroutines = "1.10.2"
-kotlinx-serialization = "1.9.0"
+kotlinx-coroutines = "1.11.0"
+kotlinx-serialization = "1.11.0"
 krypt = "0.3.1" # For SecureRandom - https://github.com/chRyNaN/krypt
-ktor = "3.3.1"
-okio = "3.16.2" # For SHA-256 and Base64
+ktor = "3.5.1"
+okio = "3.17.0" # For SHA-256 and Base64
 turbine = "1.2.1"
 
 # Android
-agp = "8.13.0"
-androidx-browser = "1.9.0" # For CustomTabs
+agp = "9.3.0"
+androidx-browser = "1.10.0" # For CustomTabs
 
 
 [libraries]
@@ -32,6 +32,6 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine"}
 androidx-browser = { module = "androidx.browser:browser", version.ref = "androidx-browser" }
 
 [plugins]
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

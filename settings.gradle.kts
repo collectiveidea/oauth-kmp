@@ -7,6 +7,12 @@ pluginManagement {
     }
 }
 
+plugins {
+    // Auto-provisions a matching JDK for the Kotlin toolchain (jvmToolchain(24)) when one
+    // isn't installed locally, so the toolchain resolves without a manual JDK install.
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
 dependencyResolutionManagement {
     repositories {
         google()
