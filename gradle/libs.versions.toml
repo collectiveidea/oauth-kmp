@@ -11,7 +11,15 @@ turbine = "1.2.1"
 
 # Android
 agp = "9.3.0"
-androidx-browser = "1.10.0" # For CustomTabs
+androidx-activity = "1.13.0" # For the Auth Tab ActivityResult launcher
+androidx-browser = "1.10.0" # For Auth Tab (androidx.browser.auth)
+
+# Android instrumentation tests
+androidx-test-core = "1.7.0"
+androidx-test-runner = "1.7.0"
+androidx-test-ext-junit = "1.3.0"
+espresso = "3.7.0"
+junit = "4.13.2"
 
 
 [libraries]
@@ -29,7 +37,15 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine"}
 # Android
+androidx-activity = { module = "androidx.activity:activity", version.ref = "androidx-activity" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "androidx-browser" }
+# Android instrumentation tests
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+androidx-espresso-intents = { module = "androidx.test.espresso:espresso-intents", version.ref = "espresso" }
+junit = { module = "junit:junit", version.ref = "junit" }
 
 [plugins]
 androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

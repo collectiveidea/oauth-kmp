@@ -25,6 +25,12 @@ kotlin {
         // Opt in to JVM host unit tests so commonTest still runs on the Android/JVM host,
         // as `:oauth-core:testAndroidHostTest`.
         withHostTestBuilder {}
+
+        // On-device (instrumented) tests in src/androidDeviceTest, run via
+        // `:oauth-core:connectedAndroidTest` (requires a connected device or emulator).
+        withDeviceTest {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
 
     listOf(
@@ -62,7 +68,19 @@ kotlin {
             implementation(libs.turbine)
         }
         androidMain.dependencies {
+            implementation(libs.androidx.activity)
             implementation(libs.androidx.browser)
+        }
+        getByName("androidDeviceTest").dependencies {
+            implementation(libs.androidx.activity)
+            implementation(libs.androidx.browser)
+
+            implementation(libs.junit)
+            implementation(libs.androidx.test.core)
+            implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.test.ext.junit)
+            implementation(libs.androidx.espresso.core)
+            implementation(libs.androidx.espresso.intents)
         }
     }
 }
