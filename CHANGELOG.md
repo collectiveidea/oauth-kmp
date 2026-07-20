@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-20
+
 * Bump ktlint to 1.8.0. See [#10](https://github.com/collectiveidea/oauth-kmp/pull/10).
 * Update dependencies. See [#11](https://github.com/collectiveidea/oauth-kmp/pull/11).
   * Kotlin to 2.4.10
