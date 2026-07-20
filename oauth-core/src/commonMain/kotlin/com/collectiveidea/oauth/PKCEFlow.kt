@@ -18,9 +18,9 @@ import kotlin.random.Random
  *
  * This class is typically a singleton, since only one PKCE Flow happens at a time.
  *
- * @param createWebAuthSession Factory that builds the platform-native implementation, handing it
- *  the completion handler (this flow's [continueSignInWithCallbackOrError]) that the external auth
- *  session should report its result to.
+ * @param webAuthSessionFactory Builds the platform-native [WebAuthSession], handing it the completion
+ *  handler (this flow's [continueSignInWithCallbackOrError]) that the external auth session should
+ *  report its result to.
  * @param oauthService
  * @param oauthBaseUrl The fully qualified URL up until the "oauth" in the path. That is, if the sign
  *  in URL is "https://www.example.com/path/oauth/authorize", then this should be
@@ -35,7 +35,7 @@ import kotlin.random.Random
  *  to control the randomization values generated under test.
  */
 public class PKCEFlow(
-    createWebAuthSession: ((String?, String?) -> Unit) -> WebAuthSession,
+    webAuthSessionFactory: WebAuthSessionFactory,
     private val oauthService: OAuthService,
     private val oauthBaseUrl: String,
     private val redirectUrl: String,
@@ -43,12 +43,6 @@ public class PKCEFlow(
     private val ioDispatcher: CoroutineDispatcher,
     private val random: Random = SecureRandom(),
 ) {
-    // The platform flow is built here (not passed in ready-made) so it can be handed this flow's
-    // continuation up front, which resolves the PKCEFlow <-> platform-flow circular dependency and
-    // lets each platform report results to a single handler set once at construction.
-    private val webAuthSession: WebAuthSession =
-        createWebAuthSession(::continueSignInWithCallbackOrError)
-
     private val pkce by lazy { PKCEUtil(random) }
 
     public data class PKCEAuthState(
@@ -68,6 +62,14 @@ public class PKCEFlow(
     public val authState: StateFlow<PKCEAuthState> = _authState.asStateFlow()
 
     private var verifier: String? = null
+
+    // The platform flow is built here (not passed in ready-made) so it can be handed this flow's
+    // continuation up front, which resolves the PKCEFlow <-> platform-flow circular dependency and
+    // lets each platform report results to a single handler set once at construction. It is
+    // declared after the state properties above so a factory that invokes the handler immediately
+    // still finds them initialized.
+    private val webAuthSession: WebAuthSession =
+        webAuthSessionFactory.create(::continueSignInWithCallbackOrError)
 
     /**
      * Constructs the sign-in URL to open in an external web browser so that the user

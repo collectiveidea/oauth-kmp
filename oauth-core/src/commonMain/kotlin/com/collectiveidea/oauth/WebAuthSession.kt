@@ -25,3 +25,15 @@ public interface WebAuthSession {
         redirectUrl: String,
     )
 }
+
+/**
+ * Builds a [WebAuthSession] for the completion handler it should report results to. [PKCEFlow] calls
+ * this with its own [PKCEFlow.continueSignInWithCallbackOrError] when it is constructed.
+ *
+ * It's a named `fun interface` rather than a bare function type so it can be provided by type — e.g.
+ * registered per platform in a DI graph and resolved into the shared [PKCEFlow] construction. A
+ * lambda or a constructor reference (e.g. `::IosWebAuthSession`) converts to it automatically.
+ */
+public fun interface WebAuthSessionFactory {
+    public fun create(completionHandler: (String?, String?) -> Unit): WebAuthSession
+}

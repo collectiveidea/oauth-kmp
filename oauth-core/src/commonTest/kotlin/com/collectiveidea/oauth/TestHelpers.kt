@@ -38,7 +38,7 @@ class TestWebAuthSession(
 fun testWebAuthSession(
     automaticallyInvokeCompletionCallback: Boolean = false,
     simulateError: Boolean = false,
-): ((String?, String?) -> Unit) -> WebAuthSession = { completionHandler ->
+): WebAuthSessionFactory = WebAuthSessionFactory { completionHandler ->
     TestWebAuthSession(completionHandler, automaticallyInvokeCompletionCallback, simulateError)
 }
 
