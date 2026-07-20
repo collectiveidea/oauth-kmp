@@ -180,6 +180,24 @@ class AndroidPKCEFlowTest {
         )
     }
 
+    @Test
+    fun recreatedResultIsDeliveredToOnRecreatedResultHandler() {
+        // A result redelivered to a flow reconstructed after the sign-in launched (e.g. across a
+        // rotation) arrives with no in-flight startSignIn handler, so it must reach onRecreatedResult.
+        // The real Activity Result redelivery only happens across an actual recreation, so drive the
+        // launcher's delivery path directly rather than through startSignIn.
+        AuthTabTestActivity.recreatedResult = null
+        val callbackUrl = "exampleapp://oauth?code=the-auth-code"
+
+        ActivityScenario.launch(AuthTabTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.flow.deliverAuthTabResult(AuthTabIntent.RESULT_OK, callbackUrl)
+            }
+        }
+
+        assertEquals(callbackUrl to null, AuthTabTestActivity.recreatedResult)
+    }
+
     /**
      * Forces the Auth Tab branch, launches the test host, kicks off [AndroidPKCEFlow.startSignIn],
      * runs [verifyLaunch] while the activity is still resumed, and returns the (callbackUrl,
