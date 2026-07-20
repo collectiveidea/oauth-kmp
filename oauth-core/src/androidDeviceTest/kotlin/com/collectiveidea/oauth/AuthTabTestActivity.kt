@@ -4,7 +4,7 @@ import androidx.activity.ComponentActivity
 import java.util.concurrent.CountDownLatch
 
 /**
- * Test host that constructs [AndroidPKCEFlow] as a field — during activity construction, before
+ * Test host that constructs [AndroidWebAuthSession] as a field — during activity construction, before
  * the lifecycle reaches STARTED — which is what the Auth Tab launcher registration requires.
  * Tests then drive the already-registered launcher via `scenario.onActivity { it.flow... }`.
  *
@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch
  * [resultLatch], so tests can await it and assert the delivered (callbackUrl, errorMessage).
  */
 class AuthTabTestActivity : ComponentActivity() {
-    val flow = AndroidPKCEFlow(this) { callbackUrl, errorMessage ->
+    val flow = AndroidWebAuthSession(this) { callbackUrl, errorMessage ->
         result = callbackUrl to errorMessage
         resultLatch.countDown()
     }

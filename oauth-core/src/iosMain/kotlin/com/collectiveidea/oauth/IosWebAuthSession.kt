@@ -7,9 +7,9 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.darwin.NSObject
 
-public class IosPKCEFlow(
+public class IosWebAuthSession(
     private val completionHandler: (callbackUrl: String?, errorMessage: String?) -> Unit,
-) : PlatformPKCEFlow {
+) : WebAuthSession {
     override fun startSignIn(
         signInUrl: String,
         redirectUrl: String,

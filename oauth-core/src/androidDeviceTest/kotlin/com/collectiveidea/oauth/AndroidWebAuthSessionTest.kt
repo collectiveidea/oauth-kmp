@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit
  * the host activity is still RESUMED — Espresso-Intents needs a resumed activity to run the check.
  */
 @RunWith(AndroidJUnit4::class)
-class AndroidPKCEFlowTest {
+class AndroidWebAuthSessionTest {
     private val signInUrl = "https://www.example.com/path/oauth/authorize?client_id=abc"
     private val redirectUrl = "exampleapp://oauth"
 
@@ -180,7 +180,7 @@ class AndroidPKCEFlowTest {
     }
 
     /**
-     * Forces the Auth Tab branch, launches the test host, kicks off [AndroidPKCEFlow.startSignIn],
+     * Forces the Auth Tab branch, launches the test host, kicks off [AndroidWebAuthSession.startSignIn],
      * runs [verifyLaunch] while the activity is still resumed, and returns the (callbackUrl,
      * errorMessage) the flow's completion handler records once the stubbed Auth Tab result is
      * dispatched back to the launcher.

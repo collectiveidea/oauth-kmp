@@ -9,7 +9,7 @@ import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
 
 /**
- * Android implementation of [PlatformPKCEFlow] that progressively enhances to a Chrome
+ * Android implementation of [WebAuthSession] that progressively enhances to a Chrome
  * [Auth Tab](https://developer.chrome.com/docs/android/custom-tabs/guide-auth-tab).
  *
  * When the installed browser supports Auth Tab (Chrome 137+, which in practice means Android 8.0 /
@@ -40,10 +40,10 @@ import androidx.browser.customtabs.CustomTabsIntent
  * @param completionHandler invoked with the Auth Tab result (the callback URL, or an error message);
  *  typically `PKCEFlow::continueSignInWithCallbackOrError`.
  */
-public class AndroidPKCEFlow(
+public class AndroidWebAuthSession(
     private val activity: ComponentActivity,
     private val completionHandler: (String?, String?) -> Unit,
-) : PlatformPKCEFlow {
+) : WebAuthSession {
     // Registered eagerly (at construction) so it is in place before the host is STARTED.
     private val authTabLauncher: ActivityResultLauncher<Intent> =
         AuthTabIntent.registerActivityResultLauncher(activity) { result ->

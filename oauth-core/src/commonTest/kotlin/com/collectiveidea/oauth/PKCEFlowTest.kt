@@ -19,7 +19,7 @@ class PKCEFlowTest {
     @Test
     fun `buildSignInUrl returns correct URL`() {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(),
+            testWebAuthSession(),
             createOAuthService(
                 MockEngine {
                     fail("should not be invoked")
@@ -52,7 +52,7 @@ class PKCEFlowTest {
     @Test
     fun `flow happy path completes successfully`() = runTest {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
@@ -133,7 +133,7 @@ class PKCEFlowTest {
     @Test
     fun `flow happy path completes successfully when manually invoking completion callback`() = runTest {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = false,
             ),
             createOAuthService(
@@ -204,7 +204,7 @@ class PKCEFlowTest {
     @Test
     fun `flow reports error message when platform invoke callback with error message`() = runTest {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
                 simulateError = true,
             ),
@@ -261,7 +261,7 @@ class PKCEFlowTest {
     @Test
     fun `flow reports error message when server rejects authorization code`() = runTest {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
@@ -325,7 +325,7 @@ class PKCEFlowTest {
     @Test
     fun `flow reports error message when authorization code fails`() = runTest {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
@@ -388,7 +388,7 @@ class PKCEFlowTest {
     @Test
     fun `flow reports error when continuing a callback without a verifier`() = runTest {
         val pkceFlow = PKCEFlow(
-            testPlatformPKCEFlow(),
+            testWebAuthSession(),
             createOAuthService(
                 MockEngine {
                     fail("token exchange must not be attempted without a verifier")
