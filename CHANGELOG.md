@@ -18,6 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   * Adopt the Android Kotlin Multiplatform library plugin. The published library now
     emits Java 11 bytecode (build against it with a JDK 11+ toolchain) and its Android
     artifact is a single variant. The minimum iOS deployment target is now 15 (Kotlin 2.4).
+* Use a Chrome [Auth Tab](https://developer.chrome.com/docs/android/custom-tabs/guide-auth-tab) for the
+  Android sign-in flow when the browser supports it (Chrome 137+), falling back to a Custom Tab
+  otherwise. On the Auth Tab path the redirect is delivered directly to the app, so `onNewIntent`
+  handling is only needed for the Custom Tab fallback. **Breaking:** `AndroidPKCEFlow` now takes a
+  `ComponentActivity` instead of a `Context`. See [#12](https://github.com/collectiveidea/oauth-kmp/pull/12).
 
 ## [0.1.2] - 2025-10-24
 
