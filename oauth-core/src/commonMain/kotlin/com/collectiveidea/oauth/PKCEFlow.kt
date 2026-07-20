@@ -18,7 +18,9 @@ import kotlin.random.Random
  *
  * This class is typically a singleton, since only one PKCE Flow happens at a time.
  *
- * @param platformPKCEFlow The platform-native implementation that handles the external auth session.
+ * @param createPlatformPKCEFlow Factory that builds the platform-native implementation, handing it
+ *  the completion handler (this flow's [continueSignInWithCallbackOrError]) that the external auth
+ *  session should report its result to.
  * @param oauthService
  * @param oauthBaseUrl The fully qualified URL up until the "oauth" in the path. That is, if the sign
  *  in URL is "https://www.example.com/path/oauth/authorize", then this should be
@@ -33,7 +35,7 @@ import kotlin.random.Random
  *  to control the randomization values generated under test.
  */
 public class PKCEFlow(
-    private val platformPKCEFlow: PlatformPKCEFlow,
+    createPlatformPKCEFlow: ((String?, String?) -> Unit) -> PlatformPKCEFlow,
     private val oauthService: OAuthService,
     private val oauthBaseUrl: String,
     private val redirectUrl: String,
@@ -41,6 +43,12 @@ public class PKCEFlow(
     private val ioDispatcher: CoroutineDispatcher,
     private val random: Random = SecureRandom(),
 ) {
+    // The platform flow is built here (not passed in ready-made) so it can be handed this flow's
+    // continuation up front, which resolves the PKCEFlow <-> platform-flow circular dependency and
+    // lets each platform report results to a single handler set once at construction.
+    private val platformPKCEFlow: PlatformPKCEFlow =
+        createPlatformPKCEFlow(::continueSignInWithCallbackOrError)
+
     private val pkce by lazy { PKCEUtil(random) }
 
     public data class PKCEAuthState(
@@ -103,7 +111,7 @@ public class PKCEFlow(
         }
 
         val signInUrl = buildSignInUrl()
-        platformPKCEFlow.startSignIn(signInUrl, redirectUrl, ::continueSignInWithCallbackOrError)
+        platformPKCEFlow.startSignIn(signInUrl, redirectUrl)
     }
 
     /**

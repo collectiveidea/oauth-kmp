@@ -6,12 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-* Add an optional `completionHandlerAfterRecreate` handler to `AndroidPKCEFlow` so an Auth Tab sign-in interrupted
-  by an activity recreation (e.g. a rotation) still completes when its result is redelivered, instead
-  of being dropped and forcing the user to start over. Wire it to
-  `PKCEFlow::continueSignInWithCallbackOrError`. If the sign-in is lost entirely (e.g. process death
-  clears the in-memory PKCE verifier), the flow now finishes with a clear "try again" error rather
-  than a confusing internal one. See [#15](https://github.com/collectiveidea/oauth-kmp/pull/15).
+* **Breaking:** each `PlatformPKCEFlow` now receives its completion handler once, at construction,
+  instead of on every `startSignIn` call. `startSignIn(signInUrl, redirectUrl)` no longer takes a
+  handler; `AndroidPKCEFlow(activity, completionHandler)` and `IosPKCEFlow(completionHandler)` take it
+  in their constructors; and `PKCEFlow` now takes a factory
+  (`((String?, String?) -> Unit) -> PlatformPKCEFlow`) that it calls with its own
+  `continueSignInWithCallbackOrError`. On Android that single handler is what lets an Auth Tab sign-in
+  interrupted by an Activity recreation (e.g. a rotation) complete when its result is redelivered to
+  the rebuilt flow, instead of being dropped and forcing the user to start over — it replaces the
+  earlier `completionHandlerAfterRecreate` parameter. If the sign-in is lost entirely (e.g. process
+  death clears the in-memory PKCE verifier), the flow finishes with a clear "try again" error rather
+  than a confusing internal one.
 
 ## [0.2.0] - 2026-07-20
 

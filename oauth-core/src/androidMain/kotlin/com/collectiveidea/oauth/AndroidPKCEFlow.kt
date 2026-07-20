@@ -13,9 +13,9 @@ import androidx.browser.customtabs.CustomTabsIntent
  * [Auth Tab](https://developer.chrome.com/docs/android/custom-tabs/guide-auth-tab).
  *
  * When the installed browser supports Auth Tab (Chrome 137+, which in practice means Android 8.0 /
- * API 26 and up), sign-in uses an Auth Tab: it captures the OAuth redirect itself and returns the
- * callback URL directly to [startSignIn]'s `completionHandler`, exactly like iOS — no
- * redirect-scheme `<intent-filter>` or `onNewIntent` handling required.
+ * API 26 and up), sign-in uses an Auth Tab: it captures the OAuth redirect itself and reports the
+ * callback URL directly to [completionHandler], exactly like iOS — no redirect-scheme
+ * `<intent-filter>` or `onNewIntent` handling required.
  *
  * On older devices/browsers without Auth Tab support (e.g. API 23–25, which cannot install Chrome
  * 137+), it falls back to a plain Custom Tab. In that case the redirect comes back the classic
@@ -24,28 +24,26 @@ import androidx.browser.customtabs.CustomTabsIntent
  *
  * Because it registers an Activity Result launcher, [activity] must be constructed as a field or
  * early in `onCreate` (before the activity reaches STARTED), per the Activity Result API contract.
- * A new instance is therefore created for each Activity instance; pass [completionHandlerAfterRecreate] so an
- * Auth Tab result that is redelivered to a freshly-recreated instance (e.g. after a rotation mid
- * sign-in) is still delivered instead of dropped.
+ * A new instance is therefore created for each Activity instance. [completionHandler] is supplied at
+ * construction (rather than per [startSignIn] call) precisely so that an Auth Tab result redelivered
+ * to a freshly-recreated instance — one that never had [startSignIn] called on it, e.g. after the
+ * Activity was recreated mid sign-in — is still delivered instead of dropped. That redelivery
+ * matches launchers by registration order, so the recreated Activity must register its launchers
+ * (this one included) in the same order on every creation; the unconditional construction above
+ * already provides that.
  *
  * A full process death still loses an in-flight sign-in: the recreated flow's PKCE verifier is gone,
  * so a redelivered callback URL can no longer be exchanged — [PKCEFlow] finishes with an error and
  * the user must restart sign-in.
  *
  * @param activity the host Activity, used to register the Auth Tab launcher and launch the browser.
- * @param completionHandlerAfterRecreate the completion handler for an Auth Tab result that is
- *  redelivered after this flow was reconstructed (e.g. the Activity was recreated mid sign-in), i.e.
- *  when no [startSignIn] call is in flight to receive it. This is the **same** callback passed to
- *  [startSignIn] — typically `PKCEFlow::continueSignInWithCallbackOrError`; it is a separate parameter
- *  only because a recreated instance never had [startSignIn] called on it. When `null` (the default)
- *  such a redelivered result is dropped and the user must restart sign-in.
+ * @param completionHandler invoked with the Auth Tab result (the callback URL, or an error message);
+ *  typically `PKCEFlow::continueSignInWithCallbackOrError`.
  */
 public class AndroidPKCEFlow(
     private val activity: ComponentActivity,
-    private val completionHandlerAfterRecreate: ((String?, String?) -> Unit)? = null,
+    private val completionHandler: (String?, String?) -> Unit,
 ) : PlatformPKCEFlow {
-    private var completionHandler: ((String?, String?) -> Unit)? = null
-
     // Registered eagerly (at construction) so it is in place before the host is STARTED.
     private val authTabLauncher: ActivityResultLauncher<Intent> =
         AuthTabIntent.registerActivityResultLauncher(activity) { result ->
@@ -53,27 +51,19 @@ public class AndroidPKCEFlow(
         }
 
     /**
-     * Routes an Auth Tab result to a completion handler. Prefers the in-flight handler from
-     * [startSignIn]; falls back to [completionHandlerAfterRecreate] when the result is redelivered to a flow
-     * reconstructed after the sign-in was launched (so no [startSignIn] call is in flight).
-     *
-     * `internal` rather than private only so tests can simulate a result redelivered to a
-     * freshly-recreated flow — the real Activity Result redelivery happens only across an actual
-     * Activity recreation, which can't be staged against the stubbed launcher under test.
+     * Routes an Auth Tab result to [completionHandler]. `internal` rather than private only so tests
+     * can simulate a result redelivered to a freshly-recreated flow — the real Activity Result
+     * redelivery happens only across an actual Activity recreation, which can't be staged against the
+     * stubbed launcher under test.
      */
     internal fun deliverAuthTabResult(
         resultCode: Int,
         callbackUrl: String?,
     ) {
-        // Prefer the in-flight handler from startSignIn; fall back to completionHandlerAfterRecreate when the
-        // result is redelivered to a flow reconstructed after the sign-in was launched.
-        val handler = completionHandler ?: completionHandlerAfterRecreate
-        completionHandler = null
-
         when (resultCode) {
-            AuthTabIntent.RESULT_OK -> handler?.invoke(callbackUrl, null)
-            AuthTabIntent.RESULT_CANCELED -> handler?.invoke(null, "Sign in was canceled.")
-            else -> handler?.invoke(null, "Sign in failed (result code $resultCode).")
+            AuthTabIntent.RESULT_OK -> completionHandler(callbackUrl, null)
+            AuthTabIntent.RESULT_CANCELED -> completionHandler(null, "Sign in was canceled.")
+            else -> completionHandler(null, "Sign in failed (result code $resultCode).")
         }
     }
 
@@ -86,20 +76,17 @@ public class AndroidPKCEFlow(
     override fun startSignIn(
         signInUrl: String,
         redirectUrl: String,
-        completionHandler: (String?, String?) -> Unit,
     ) {
         if (isAuthTabSupported()) {
             // The Auth Tab returns its result to authTabLauncher's callback, which forwards it to
-            // this handler. It watches for the redirect scheme (e.g. "exampleapp" from
+            // completionHandler. It watches for the redirect scheme (e.g. "exampleapp" from
             // "exampleapp://oauth") to capture the redirect.
-            this.completionHandler = completionHandler
             val redirectScheme = redirectUrl.substringBefore("://")
             val authTabIntent = AuthTabIntent.Builder().build()
             authTabIntent.launch(authTabLauncher, Uri.parse(signInUrl), redirectScheme)
         } else {
             // Fallback: a plain Custom Tab. The redirect returns via the app's redirect-scheme
-            // intent-filter + onNewIntent, where the app calls continueSignInWithCallbackOrError,
-            // so completionHandler is not used on this path.
+            // intent-filter + onNewIntent, where the app calls continueSignInWithCallbackOrError.
             val customTabsIntent = CustomTabsIntent.Builder().build()
             customTabsIntent.launchUrl(activity, Uri.parse(signInUrl))
         }

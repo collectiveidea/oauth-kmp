@@ -7,11 +7,12 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.darwin.NSObject
 
-public class IosPKCEFlow : PlatformPKCEFlow {
+public class IosPKCEFlow(
+    private val completionHandler: (callbackUrl: String?, errorMessage: String?) -> Unit,
+) : PlatformPKCEFlow {
     override fun startSignIn(
         signInUrl: String,
         redirectUrl: String,
-        completionHandler: (String?, String?) -> Unit,
     ) {
         val authSession = ASWebAuthenticationSession(
             uRL = NSURL.URLWithString(signInUrl)!!,
