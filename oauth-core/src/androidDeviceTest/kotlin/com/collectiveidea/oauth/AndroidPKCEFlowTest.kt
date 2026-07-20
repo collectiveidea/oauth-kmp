@@ -161,7 +161,7 @@ class AndroidPKCEFlowTest {
     @Test
     fun recreatedResultHandlerIsNotUsedWhileASignInIsInFlight() {
         // With an in-flight startSignIn handler present, the Auth Tab result is delivered there and
-        // the onRecreatedResult fallback (for results redelivered to a reconstructed flow) is left
+        // the completionHandlerAfterRecreate fallback (for results redelivered to a reconstructed flow) is left
         // untouched.
         AuthTabTestActivity.recreatedResult = null
 
@@ -175,15 +175,15 @@ class AndroidPKCEFlowTest {
         assertEquals(callbackUrl, url)
         assertNull(error)
         assertNull(
-            "onRecreatedResult must not fire while startSignIn's handler is active",
+            "completionHandlerAfterRecreate must not fire while startSignIn's handler is active",
             AuthTabTestActivity.recreatedResult,
         )
     }
 
     @Test
-    fun recreatedResultIsDeliveredToOnRecreatedResultHandler() {
+    fun recreatedResultIsDeliveredToCompletionHandlerAfterRecreate() {
         // A result redelivered to a flow reconstructed after the sign-in launched (e.g. across a
-        // rotation) arrives with no in-flight startSignIn handler, so it must reach onRecreatedResult.
+        // rotation) arrives with no in-flight startSignIn handler, so it must reach completionHandlerAfterRecreate.
         // The real Activity Result redelivery only happens across an actual recreation, so drive the
         // launcher's delivery path directly rather than through startSignIn.
         AuthTabTestActivity.recreatedResult = null

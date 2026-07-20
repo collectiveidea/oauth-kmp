@@ -24,7 +24,7 @@ import androidx.browser.customtabs.CustomTabsIntent
  *
  * Because it registers an Activity Result launcher, [activity] must be constructed as a field or
  * early in `onCreate` (before the activity reaches STARTED), per the Activity Result API contract.
- * A new instance is therefore created for each Activity instance; pass [onRecreatedResult] so an
+ * A new instance is therefore created for each Activity instance; pass [completionHandlerAfterRecreate] so an
  * Auth Tab result that is redelivered to a freshly-recreated instance (e.g. after a rotation mid
  * sign-in) is still delivered instead of dropped.
  *
@@ -33,14 +33,16 @@ import androidx.browser.customtabs.CustomTabsIntent
  * the user must restart sign-in.
  *
  * @param activity the host Activity, used to register the Auth Tab launcher and launch the browser.
- * @param onRecreatedResult optional handler — typically `PKCEFlow::continueSignInWithCallbackOrError`
- *  — invoked with an Auth Tab result that is redelivered after this flow was reconstructed, i.e. when
- *  no [startSignIn] call is in flight to receive it. When `null` (the default) such a result is
- *  dropped and the user must restart sign-in.
+ * @param completionHandlerAfterRecreate the completion handler for an Auth Tab result that is
+ *  redelivered after this flow was reconstructed (e.g. the Activity was recreated mid sign-in), i.e.
+ *  when no [startSignIn] call is in flight to receive it. This is the **same** callback passed to
+ *  [startSignIn] — typically `PKCEFlow::continueSignInWithCallbackOrError`; it is a separate parameter
+ *  only because a recreated instance never had [startSignIn] called on it. When `null` (the default)
+ *  such a redelivered result is dropped and the user must restart sign-in.
  */
 public class AndroidPKCEFlow(
     private val activity: ComponentActivity,
-    private val onRecreatedResult: ((String?, String?) -> Unit)? = null,
+    private val completionHandlerAfterRecreate: ((String?, String?) -> Unit)? = null,
 ) : PlatformPKCEFlow {
     private var completionHandler: ((String?, String?) -> Unit)? = null
 
@@ -52,7 +54,7 @@ public class AndroidPKCEFlow(
 
     /**
      * Routes an Auth Tab result to a completion handler. Prefers the in-flight handler from
-     * [startSignIn]; falls back to [onRecreatedResult] when the result is redelivered to a flow
+     * [startSignIn]; falls back to [completionHandlerAfterRecreate] when the result is redelivered to a flow
      * reconstructed after the sign-in was launched (so no [startSignIn] call is in flight).
      *
      * `internal` rather than private only so tests can simulate a result redelivered to a
@@ -63,9 +65,9 @@ public class AndroidPKCEFlow(
         resultCode: Int,
         callbackUrl: String?,
     ) {
-        // Prefer the in-flight handler from startSignIn; fall back to onRecreatedResult when the
+        // Prefer the in-flight handler from startSignIn; fall back to completionHandlerAfterRecreate when the
         // result is redelivered to a flow reconstructed after the sign-in was launched.
-        val handler = completionHandler ?: onRecreatedResult
+        val handler = completionHandler ?: completionHandlerAfterRecreate
         completionHandler = null
 
         when (resultCode) {

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-* Add an optional `onRecreatedResult` handler to `AndroidPKCEFlow` so an Auth Tab sign-in interrupted
+* Add an optional `completionHandlerAfterRecreate` handler to `AndroidPKCEFlow` so an Auth Tab sign-in interrupted
   by an activity recreation (e.g. a rotation) still completes when its result is redelivered, instead
   of being dropped and forcing the user to start over. Wire it to
   `PKCEFlow::continueSignInWithCallbackOrError`. If the sign-in is lost entirely (e.g. process death
