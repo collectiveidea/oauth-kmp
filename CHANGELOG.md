@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+* Add `CurrentActivityWebAuthSession` (Android): an app-scoped `WebAuthSession` for the common setup
+  where `PKCEFlow` is a singleton but `AndroidWebAuthSession` must be rebuilt per `Activity`. Hand its
+  `factory` to `PKCEFlow` and call `bindTo(activity)` from `onCreate`; it forwards to the current
+  `Activity`'s session, hands the binding back to the previous bound `Activity` when one is
+  finished, and releases it once no bound `Activity` remains. A recreated `Activity` rebinds in
+  `onCreate`, so an in-flight sign-in survives recreation.
 * **Breaking:** renamed the platform browser types so they no longer read as variants of the
   `PKCEFlow` orchestrator — they run the browser authorization step and do no PKCE themselves:
   `PlatformPKCEFlow` → `WebAuthSession`, `AndroidPKCEFlow` → `AndroidWebAuthSession`, and
