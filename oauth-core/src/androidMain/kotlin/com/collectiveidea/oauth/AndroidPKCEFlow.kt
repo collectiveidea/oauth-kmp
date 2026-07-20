@@ -24,6 +24,10 @@ import androidx.browser.customtabs.CustomTabsIntent
  *
  * Because it registers an Activity Result launcher, [activity] must be constructed as a field or
  * early in `onCreate` (before the activity reaches STARTED), per the Activity Result API contract.
+ *
+ * The in-flight sign-in is held in memory: if the hosting process is destroyed while the browser is
+ * in the foreground, the sign-in is lost and must be restarted (a redelivered Auth Tab result has
+ * no handler to receive it, and the flow's PKCE verifier is gone regardless).
  */
 public class AndroidPKCEFlow(
     private val activity: ComponentActivity,
@@ -54,17 +58,18 @@ public class AndroidPKCEFlow(
         redirectUrl: String,
         completionHandler: (String?, String?) -> Unit,
     ) {
-        this.completionHandler = completionHandler
-
         if (isAuthTabSupported()) {
-            // The Auth Tab watches for this scheme (e.g. "exampleapp" from "exampleapp://oauth")
-            // and returns the redirect to authTabLauncher's callback.
+            // The Auth Tab returns its result to authTabLauncher's callback, which forwards it to
+            // this handler. It watches for the redirect scheme (e.g. "exampleapp" from
+            // "exampleapp://oauth") to capture the redirect.
+            this.completionHandler = completionHandler
             val redirectScheme = redirectUrl.substringBefore("://")
             val authTabIntent = AuthTabIntent.Builder().build()
             authTabIntent.launch(authTabLauncher, Uri.parse(signInUrl), redirectScheme)
         } else {
             // Fallback: a plain Custom Tab. The redirect returns via the app's redirect-scheme
-            // intent-filter + onNewIntent, where the app calls continueSignInWithCallbackOrError.
+            // intent-filter + onNewIntent, where the app calls continueSignInWithCallbackOrError,
+            // so completionHandler is not used on this path.
             val customTabsIntent = CustomTabsIntent.Builder().build()
             customTabsIntent.launchUrl(activity, Uri.parse(signInUrl))
         }
