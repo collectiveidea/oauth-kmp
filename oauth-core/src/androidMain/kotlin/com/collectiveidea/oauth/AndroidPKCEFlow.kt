@@ -24,20 +24,31 @@ import androidx.browser.customtabs.CustomTabsIntent
  *
  * Because it registers an Activity Result launcher, [activity] must be constructed as a field or
  * early in `onCreate` (before the activity reaches STARTED), per the Activity Result API contract.
+ * A new instance is therefore created for each Activity instance; pass [onRecreatedResult] so an
+ * Auth Tab result that is redelivered to a freshly-recreated instance (e.g. after a rotation mid
+ * sign-in) is still delivered instead of dropped.
  *
- * The in-flight sign-in is held in memory: if the hosting process is destroyed while the browser is
- * in the foreground, the sign-in is lost and must be restarted (a redelivered Auth Tab result has
- * no handler to receive it, and the flow's PKCE verifier is gone regardless).
+ * A full process death still loses an in-flight sign-in: the recreated flow's PKCE verifier is gone,
+ * so a redelivered callback URL can no longer be exchanged and the user must restart sign-in.
+ *
+ * @param activity the host Activity, used to register the Auth Tab launcher and launch the browser.
+ * @param onRecreatedResult optional handler — typically `PKCEFlow::continueSignInWithCallbackOrError`
+ *  — invoked with an Auth Tab result that is redelivered after this flow was reconstructed, i.e. when
+ *  no [startSignIn] call is in flight to receive it. When `null` (the default) such a result is
+ *  dropped and the user must restart sign-in.
  */
 public class AndroidPKCEFlow(
     private val activity: ComponentActivity,
+    private val onRecreatedResult: ((String?, String?) -> Unit)? = null,
 ) : PlatformPKCEFlow {
     private var completionHandler: ((String?, String?) -> Unit)? = null
 
     // Registered eagerly (at construction) so it is in place before the host is STARTED.
     private val authTabLauncher: ActivityResultLauncher<Intent> =
         AuthTabIntent.registerActivityResultLauncher(activity) { result ->
-            val handler = completionHandler
+            // Prefer the in-flight handler from startSignIn; fall back to onRecreatedResult when the
+            // result is redelivered to a flow reconstructed after the sign-in was launched.
+            val handler = completionHandler ?: onRecreatedResult
             completionHandler = null
 
             when (result.resultCode) {

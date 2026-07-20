@@ -158,6 +158,28 @@ class AndroidPKCEFlowTest {
         }
     }
 
+    @Test
+    fun recreatedResultHandlerIsNotUsedWhileASignInIsInFlight() {
+        // With an in-flight startSignIn handler present, the Auth Tab result is delivered there and
+        // the onRecreatedResult fallback (for results redelivered to a reconstructed flow) is left
+        // untouched.
+        AuthTabTestActivity.recreatedResult = null
+
+        val callbackUrl = "exampleapp://oauth?code=the-auth-code"
+        intending(not(isInternal())).respondWith(
+            ActivityResult(AuthTabIntent.RESULT_OK, Intent().apply { data = Uri.parse(callbackUrl) }),
+        )
+
+        val (url, error) = runAuthTabSignIn()
+
+        assertEquals(callbackUrl, url)
+        assertNull(error)
+        assertNull(
+            "onRecreatedResult must not fire while startSignIn's handler is active",
+            AuthTabTestActivity.recreatedResult,
+        )
+    }
+
     /**
      * Forces the Auth Tab branch, launches the test host, kicks off [AndroidPKCEFlow.startSignIn],
      * runs [verifyLaunch] while the activity is still resumed, and returns the (callbackUrl,
