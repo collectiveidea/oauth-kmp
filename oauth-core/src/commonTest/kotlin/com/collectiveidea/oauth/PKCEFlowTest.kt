@@ -384,4 +384,49 @@ class PKCEFlowTest {
             turbine.ensureAllEventsConsumed()
         }
     }
+
+    @Test
+    fun `flow reports error when continuing a callback without a verifier`() = runTest {
+        val pkceFlow = PKCEFlow(
+            TestPlatformPKCEFlow(),
+            createOAuthService(
+                MockEngine {
+                    fail("token exchange must not be attempted without a verifier")
+                },
+            ),
+            oauthBaseUrl = "https://www.example.com/path/",
+            redirectUrl = "exampleapp://oauth",
+            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            ioDispatcher = Dispatchers.IO,
+        )
+
+        turbineScope {
+            val turbine = pkceFlow.authState.testIn(backgroundScope)
+
+            // Initial state
+
+            assertEquals(
+                PKCEFlow.PKCEAuthState(
+                    state = PKCEFlow.PKCEAuthState.State.NOT_STARTED,
+                ),
+                turbine.awaitItem(),
+            )
+
+            // Deliver a valid callback without a preceding startSignIn, mimicking a result
+            // redelivered to a flow reconstructed after the sign-in (and its verifier) was lost. It
+            // should finish with an error rather than attempt an exchange with a missing verifier.
+
+            pkceFlow.continueSignInWithCallbackOrError("exampleapp://oauth?code=the-auth-code", null)
+
+            assertEquals(
+                PKCEFlow.PKCEAuthState(
+                    state = PKCEFlow.PKCEAuthState.State.FINISHED,
+                    errorMessage = "Sign in expired before it could be completed. Please try signing in again.",
+                ),
+                turbine.awaitItem(),
+            )
+
+            turbine.ensureAllEventsConsumed()
+        }
+    }
 }

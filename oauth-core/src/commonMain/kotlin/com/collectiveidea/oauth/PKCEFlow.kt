@@ -124,11 +124,23 @@ public class PKCEFlow(
             }
         } else {
             val code = extractCodeFrom(callbackUrl)
+            // Capture the verifier once: it is generated in startSignIn, held only in memory, and
+            // cleared by resetState, so read it before the coroutine below could observe a change.
+            val verifier = verifier
             if (code.isNullOrBlank()) {
                 _authState.update {
                     PKCEAuthState(
                         PKCEAuthState.State.FINISHED,
                         errorMessage = "Authorization code missing from external sign in.",
+                    )
+                }
+            } else if (verifier == null) {
+                // No verifier means this result was redelivered to a flow reconstructed after the
+                // original sign-in was lost (e.g. process death), so the code can't be exchanged.
+                _authState.update {
+                    PKCEAuthState(
+                        PKCEAuthState.State.FINISHED,
+                        errorMessage = "Sign in expired before it could be completed. Please try signing in again.",
                     )
                 }
             } else {
@@ -139,7 +151,7 @@ public class PKCEFlow(
                 }
 
                 externalScope.launch {
-                    exchangeAuthorizationCode(code)
+                    exchangeAuthorizationCode(code, verifier)
                 }
             }
         }
@@ -155,10 +167,13 @@ public class PKCEFlow(
         null
     }
 
-    private suspend fun exchangeAuthorizationCode(code: String) {
+    private suspend fun exchangeAuthorizationCode(
+        code: String,
+        verifier: String,
+    ) {
         try {
             val tokenResponse = withContext(ioDispatcher) {
-                oauthService.exchangeAuthorizationCode(code, verifier!!, redirectUrl)
+                oauthService.exchangeAuthorizationCode(code, verifier, redirectUrl)
             }
 
             _authState.update {

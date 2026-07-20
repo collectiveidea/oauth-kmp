@@ -29,7 +29,8 @@ import androidx.browser.customtabs.CustomTabsIntent
  * sign-in) is still delivered instead of dropped.
  *
  * A full process death still loses an in-flight sign-in: the recreated flow's PKCE verifier is gone,
- * so a redelivered callback URL can no longer be exchanged and the user must restart sign-in.
+ * so a redelivered callback URL can no longer be exchanged — [PKCEFlow] finishes with an error and
+ * the user must restart sign-in.
  *
  * @param activity the host Activity, used to register the Auth Tab launcher and launch the browser.
  * @param onRecreatedResult optional handler — typically `PKCEFlow::continueSignInWithCallbackOrError`
