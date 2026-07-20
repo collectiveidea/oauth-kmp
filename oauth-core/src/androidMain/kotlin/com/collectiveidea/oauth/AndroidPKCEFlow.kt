@@ -46,17 +46,33 @@ public class AndroidPKCEFlow(
     // Registered eagerly (at construction) so it is in place before the host is STARTED.
     private val authTabLauncher: ActivityResultLauncher<Intent> =
         AuthTabIntent.registerActivityResultLauncher(activity) { result ->
-            // Prefer the in-flight handler from startSignIn; fall back to onRecreatedResult when the
-            // result is redelivered to a flow reconstructed after the sign-in was launched.
-            val handler = completionHandler ?: onRecreatedResult
-            completionHandler = null
-
-            when (result.resultCode) {
-                AuthTabIntent.RESULT_OK -> handler?.invoke(result.resultUri?.toString(), null)
-                AuthTabIntent.RESULT_CANCELED -> handler?.invoke(null, "Sign in was canceled.")
-                else -> handler?.invoke(null, "Sign in failed (result code ${result.resultCode}).")
-            }
+            deliverAuthTabResult(result.resultCode, result.resultUri?.toString())
         }
+
+    /**
+     * Routes an Auth Tab result to a completion handler. Prefers the in-flight handler from
+     * [startSignIn]; falls back to [onRecreatedResult] when the result is redelivered to a flow
+     * reconstructed after the sign-in was launched (so no [startSignIn] call is in flight).
+     *
+     * `internal` rather than private only so tests can simulate a result redelivered to a
+     * freshly-recreated flow — the real Activity Result redelivery happens only across an actual
+     * Activity recreation, which can't be staged against the stubbed launcher under test.
+     */
+    internal fun deliverAuthTabResult(
+        resultCode: Int,
+        callbackUrl: String?,
+    ) {
+        // Prefer the in-flight handler from startSignIn; fall back to onRecreatedResult when the
+        // result is redelivered to a flow reconstructed after the sign-in was launched.
+        val handler = completionHandler ?: onRecreatedResult
+        completionHandler = null
+
+        when (resultCode) {
+            AuthTabIntent.RESULT_OK -> handler?.invoke(callbackUrl, null)
+            AuthTabIntent.RESULT_CANCELED -> handler?.invoke(null, "Sign in was canceled.")
+            else -> handler?.invoke(null, "Sign in failed (result code $resultCode).")
+        }
+    }
 
     /**
      * Forces the Auth Tab vs. Custom Tab decision in tests. When `null` (production) support is
