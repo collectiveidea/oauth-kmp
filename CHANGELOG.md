@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+* Add an optional `onRecreatedResult` handler to `AndroidPKCEFlow` so an Auth Tab sign-in interrupted
+  by an activity recreation (e.g. a rotation) still completes when its result is redelivered, instead
+  of being dropped and forcing the user to start over. Wire it to
+  `PKCEFlow::continueSignInWithCallbackOrError`. If the sign-in is lost entirely (e.g. process death
+  clears the in-memory PKCE verifier), the flow now finishes with a clear "try again" error rather
+  than a confusing internal one. See [#15](https://github.com/collectiveidea/oauth-kmp/pull/15).
+
 ## [0.2.0] - 2026-07-20
 
 * Bump ktlint to 1.8.0. See [#10](https://github.com/collectiveidea/oauth-kmp/pull/10).
