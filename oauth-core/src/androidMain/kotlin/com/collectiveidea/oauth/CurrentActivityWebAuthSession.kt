@@ -76,6 +76,15 @@ public class CurrentActivityWebAuthSession : WebAuthSession {
         )
     }
 
+    /**
+     * Forwards to the bound Activity's [AndroidWebAuthSession]. Called by [PKCEFlow.startSignIn]
+     * through the [WebAuthSession] contract — public only because the interface requires it. App
+     * code starts a sign-in with [PKCEFlow.startSignIn], never by calling this directly (see
+     * [WebAuthSession.startSignIn]).
+     *
+     * @throws IllegalArgumentException if no Activity is bound. Call [bindTo] from the host
+     *  Activity's `onCreate` first.
+     */
     override fun startSignIn(
         signInUrl: String,
         redirectUrl: String,

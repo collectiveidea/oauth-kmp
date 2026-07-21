@@ -1,0 +1,34 @@
+---
+title: iOS sign-in round trip
+---
+sequenceDiagram
+    autonumber
+    box rgb(232, 240, 254) App code
+        participant App as App UI / ViewModel
+    end
+    box rgb(232, 245, 233) oauth-kmp library
+        participant PKCEFlow as PKCEFlow (commonMain)
+        participant Session as IosWebAuthSession
+    end
+    box rgb(255, 243, 224) OS
+        participant Sheet as ASWebAuthenticationSession
+    end
+    box rgb(245, 245, 245) Server
+        participant Server as OAuth server
+    end
+
+    App->>PKCEFlow: startSignIn()
+    Note over PKCEFlow: authState = WAITING_FOR_AUTHORIZATION_CODE<br/>generate verifier, build sign-in URL with S256 challenge
+    PKCEFlow->>Session: startSignIn(signInUrl, redirectUrl)
+    Session->>Sheet: ASWebAuthenticationSession(signInUrl,<br/>callbackURLScheme, completion).start()
+    Note over Sheet: ★ control is with the OS —<br/>user signs in inside the system browser sheet
+    Sheet->>Server: GET oauth/authorize (user signs in and approves)
+    Server-->>Sheet: 302 redirect to exampleapp://oauth?code=…
+    Note over Sheet: the session watches for the redirect scheme and captures<br/>the redirect itself — the URL is never routed through<br/>the app's URL-handling machinery
+    Sheet-->>Session: completion(callbackURL, error)
+    Session-->>PKCEFlow: completionHandler(url, errorMessage)<br/>= continueSignInWithCallbackOrError
+    Note over PKCEFlow: extract ?code=…<br/>authState = EXCHANGING_AUTHORIZATION_CODE
+    PKCEFlow->>Server: POST oauth/token (code + verifier) on applicationScope/ioDispatcher
+    Server-->>PKCEFlow: TokenResponse (access + refresh tokens)
+    Note over PKCEFlow: authState = FINISHED(tokenResponse)
+    PKCEFlow-->>App: observed via authState StateFlow

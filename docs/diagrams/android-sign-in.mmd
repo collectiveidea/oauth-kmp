@@ -1,0 +1,49 @@
+---
+title: Android sign-in round trip (Auth Tab route vs. Custom Tab fallback)
+---
+sequenceDiagram
+    autonumber
+    box rgb(232, 240, 254) App code
+        participant App as App UI / ViewModel
+        participant Activity as MainActivity
+    end
+    box rgb(232, 245, 233) oauth-kmp library
+        participant PKCEFlow as PKCEFlow
+        participant Holder as CurrentActivityWebAuthSession
+        participant Session as AndroidWebAuthSession
+    end
+    box rgb(255, 243, 224) OS / browser
+        participant Browser as Chrome tab
+    end
+    box rgb(245, 245, 245) Server
+        participant Server as OAuth server
+    end
+
+    App->>PKCEFlow: startSignIn()
+    Note over PKCEFlow: authState = WAITING_FOR_AUTHORIZATION_CODE<br/>generate verifier, build sign-in URL with S256 challenge
+    PKCEFlow->>Holder: startSignIn(signInUrl, redirectUrl)
+    Holder->>Session: delegate.startSignIn(signInUrl, redirectUrl)
+
+    alt browser supports Auth Tab (Chrome 137+)
+        Session->>Browser: AuthTabIntent.launch(authTabLauncher, signInUrl, redirectScheme)
+        Note over Browser: ★ control is with the OS — user signs in inside the Auth Tab
+        Browser->>Server: GET oauth/authorize (user signs in and approves)
+        Server-->>Browser: 302 redirect to exampleapp://oauth?code=…
+        Note over Browser: the Auth Tab watches for redirectScheme and captures the<br/>redirect itself — no Intent ever reaches the app
+        Browser-->>Session: Activity Result → authTabLauncher callback<br/>deliverAuthTabResult(resultCode, resultUri)
+        Session-->>PKCEFlow: completionHandler(callbackUrl, null)<br/>= continueSignInWithCallbackOrError
+    else no Auth Tab support (older browser or device)
+        Session->>Browser: CustomTabsIntent.launchUrl(activity, signInUrl)
+        Note over Browser: ★ control is with the OS — user signs in inside the Custom Tab<br/>(no result contract — a dismissed tab reports nothing back)
+        Browser->>Server: GET oauth/authorize (user signs in and approves)
+        Server-->>Browser: 302 redirect to exampleapp://oauth?code=…
+        Browser->>Activity: VIEW Intent matched by the app's redirect-scheme intent-filter
+        Activity->>PKCEFlow: onNewIntent — continueSignInWithCallbackOrError(dataUrl, null)
+        Note over Activity: app-supplied glue — this route bypasses Holder and Session entirely
+    end
+
+    Note over PKCEFlow: extract ?code=…<br/>authState = EXCHANGING_AUTHORIZATION_CODE
+    PKCEFlow->>Server: POST oauth/token (code + verifier) on applicationScope/ioDispatcher
+    Server-->>PKCEFlow: TokenResponse (access + refresh tokens)
+    Note over PKCEFlow: authState = FINISHED(tokenResponse)
+    PKCEFlow-->>App: observed via authState StateFlow

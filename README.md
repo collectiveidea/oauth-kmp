@@ -18,6 +18,9 @@ A Kotlin Multiplatform library for Android and iOS that implements the [OAuth PK
   fallback on older browsers), on iOS `ASWebAuthenticationSession`. You give `PKCEFlow` a
   **`WebAuthSessionFactory`** that builds the right one per platform.
 
+For the runtime internals — how the completion handler gets wired up and how each platform hands
+the redirect back (with sequence diagrams) — see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Installation
 
 1. Register a **custom URL scheme** for your app (e.g. `exampleapp://`) on both platforms, and create
