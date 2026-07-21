@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   its result is redelivered to the rebuilt flow, instead of being dropped and forcing the user to
   start over. If the sign-in is lost entirely (e.g. process death clears the in-memory PKCE
   verifier), the flow finishes with a clear "try again" error rather than a confusing internal one.
+* **Breaking:** `PKCEFlow`'s `externalScope` constructor parameter is renamed `applicationScope`, to
+  signal it should be an app-lifetime scope — it launches the token exchange, which shouldn't be
+  cancelled by UI teardown.
 
 ## [0.2.0] - 2026-07-20
 

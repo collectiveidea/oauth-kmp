@@ -6,7 +6,6 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
@@ -27,7 +26,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            MainScope(),
+            CoroutineScope(Dispatchers.Unconfined),
             Dispatchers.IO,
             // We use a known Random seed of 1234 to always get the same code challenge under test
             random = Random(1234),
@@ -62,7 +61,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -143,7 +142,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -215,7 +214,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -271,7 +270,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -335,7 +334,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -396,7 +395,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 

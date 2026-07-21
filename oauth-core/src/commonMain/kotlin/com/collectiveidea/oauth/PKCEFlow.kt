@@ -28,8 +28,10 @@ import kotlin.random.Random
  * @param redirectUrl The app-scheme URL and path that the external sign in process should use to transfer
  * control back to the application after external authorization session finishes.
  *  This must be the scheme that your app is registered to handle. A typical example is "exampleapp://auth"
- * @param externalScope The scope to use to launch the network request that exchanges the challenge code
- *  returned to the app (from the external authorization session) for the first set of access/refresh tokens.
+ * @param applicationScope A long-lived (app-lifetime) scope used to launch the token exchange — the
+ *  network request that swaps the authorization code for the first set of access/refresh tokens. It
+ *  should outlive the UI so an in-flight exchange isn't cancelled if the user leaves the screen; the
+ *  request itself runs on [ioDispatcher].
  * @param ioDispatcher The coroutine context to move the network request to, typically `Dispatchers.IO`
  * @param random This should _always_ be `SecureRandom()`, but we allow constructor injection here in order
  *  to control the randomization values generated under test.
@@ -39,7 +41,7 @@ public class PKCEFlow(
     private val oauthService: OAuthService,
     private val oauthBaseUrl: String,
     private val redirectUrl: String,
-    private val externalScope: CoroutineScope,
+    private val applicationScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     private val random: Random = SecureRandom(),
 ) {
@@ -160,7 +162,7 @@ public class PKCEFlow(
                     )
                 }
 
-                externalScope.launch {
+                applicationScope.launch {
                     exchangeAuthorizationCode(code, verifier)
                 }
             }
