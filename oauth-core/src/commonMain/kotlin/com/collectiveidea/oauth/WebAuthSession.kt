@@ -27,6 +27,13 @@ public interface WebAuthSession {
 }
 
 /**
+ * Receives the result of a [WebAuthSession]: the OAuth redirect `callbackUrl` on success, or an
+ * `errorMessage` on failure — exactly one is non-null. Typically a reference to
+ * [PKCEFlow.continueSignInWithCallbackOrError].
+ */
+public typealias WebAuthSessionCompletionHandler = (callbackUrl: String?, errorMessage: String?) -> Unit
+
+/**
  * Builds a [WebAuthSession] for the completion handler it should report results to. [PKCEFlow] calls
  * this with its own [PKCEFlow.continueSignInWithCallbackOrError] when it is constructed.
  *
@@ -35,5 +42,5 @@ public interface WebAuthSession {
  * lambda or a constructor reference (e.g. `::IosWebAuthSession`) converts to it automatically.
  */
 public fun interface WebAuthSessionFactory {
-    public fun create(completionHandler: (String?, String?) -> Unit): WebAuthSession
+    public fun create(completionHandler: WebAuthSessionCompletionHandler): WebAuthSession
 }

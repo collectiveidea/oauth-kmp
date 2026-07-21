@@ -13,7 +13,7 @@ import io.ktor.http.withCharset
 import io.ktor.utils.io.charsets.Charsets
 
 class TestWebAuthSession(
-    private val completionHandler: (String?, String?) -> Unit,
+    private val completionHandler: WebAuthSessionCompletionHandler,
     val automaticallyInvokeCompletionCallback: Boolean = false,
     val simulateError: Boolean = false,
 ) : WebAuthSession {

@@ -42,7 +42,7 @@ import androidx.browser.customtabs.CustomTabsIntent
  */
 public class AndroidWebAuthSession(
     private val activity: ComponentActivity,
-    private val completionHandler: (String?, String?) -> Unit,
+    private val completionHandler: WebAuthSessionCompletionHandler,
 ) : WebAuthSession {
     // Registered eagerly (at construction) so it is in place before the host is STARTED.
     private val authTabLauncher: ActivityResultLauncher<Intent> =

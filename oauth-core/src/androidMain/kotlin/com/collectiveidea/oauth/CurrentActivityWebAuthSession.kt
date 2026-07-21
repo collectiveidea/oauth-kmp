@@ -32,7 +32,7 @@ import androidx.lifecycle.LifecycleOwner
  * can be dispatched.
  */
 public class CurrentActivityWebAuthSession : WebAuthSession {
-    private var completionHandler: ((String?, String?) -> Unit)? = null
+    private var completionHandler: WebAuthSessionCompletionHandler? = null
     private var delegate: AndroidWebAuthSession? = null
 
     /**

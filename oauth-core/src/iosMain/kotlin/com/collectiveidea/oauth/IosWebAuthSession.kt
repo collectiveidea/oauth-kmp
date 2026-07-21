@@ -8,7 +8,7 @@ import platform.UIKit.UIApplication
 import platform.darwin.NSObject
 
 public class IosWebAuthSession(
-    private val completionHandler: (callbackUrl: String?, errorMessage: String?) -> Unit,
+    private val completionHandler: WebAuthSessionCompletionHandler,
 ) : WebAuthSession {
     override fun startSignIn(
         signInUrl: String,

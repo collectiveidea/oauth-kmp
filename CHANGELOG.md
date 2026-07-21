@@ -32,6 +32,8 @@ BREAKING API Changes and Additions. See [#15](https://github.com/collectiveidea/
 * **Breaking:** `PKCEFlow`'s `externalScope` constructor parameter is renamed `applicationScope`, to
   signal it should be an app-lifetime scope — it launches the token exchange, which shouldn't be
   cancelled by UI teardown.
+* Add a `WebAuthSessionCompletionHandler` typealias (`(callbackUrl: String?, errorMessage: String?) ->
+  Unit`) naming the handler a `WebAuthSession` reports its result (the redirect URL, or an error) to.
 
 ## [0.2.0] - 2026-07-20
 
