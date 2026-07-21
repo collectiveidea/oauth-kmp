@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-21
+
 BREAKING API Changes and Additions. See [#15](https://github.com/collectiveidea/oauth-kmp/pull/15).
 
 * Add `CurrentActivityWebAuthSession` (Android): an app-scoped `WebAuthSession` for the common setup
