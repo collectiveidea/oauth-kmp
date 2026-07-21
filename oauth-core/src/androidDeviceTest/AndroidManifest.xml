@@ -4,5 +4,11 @@
         <activity
             android:name="com.collectiveidea.oauth.AuthTabTestActivity"
             android:exported="false" />
+        <activity
+            android:name="com.collectiveidea.oauth.HolderTestActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.collectiveidea.oauth.SecondHolderTestActivity"
+            android:exported="false" />
     </application>
 </manifest>
