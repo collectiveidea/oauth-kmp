@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+BREAKING API Changes and Additions. See [#15](https://github.com/collectiveidea/oauth-kmp/pull/15).
+
 * Add `CurrentActivityWebAuthSession` (Android): an app-scoped `WebAuthSession` for the common setup
   where `PKCEFlow` is a singleton but `AndroidWebAuthSession` must be rebuilt per `Activity`. Hand its
   `factory` to `PKCEFlow` and call `bindTo(activity)` from `onCreate`; it forwards to the current
