@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+BREAKING API Changes and Additions. See [#15](https://github.com/collectiveidea/oauth-kmp/pull/15).
+
+* Add `CurrentActivityWebAuthSession` (Android): an app-scoped `WebAuthSession` for the common setup
+  where `PKCEFlow` is a singleton but `AndroidWebAuthSession` must be rebuilt per `Activity`. Hand its
+  `factory` to `PKCEFlow` and call `bindTo(activity)` from `onCreate`; it forwards to the current
+  `Activity`'s session, hands the binding back to the previous bound `Activity` when one is
+  finished, and releases it once no bound `Activity` remains. A recreated `Activity` rebinds in
+  `onCreate`, so an in-flight sign-in survives recreation.
+* **Breaking:** renamed the platform browser types so they no longer read as variants of the
+  `PKCEFlow` orchestrator — they run the browser authorization step and do no PKCE themselves:
+  `PlatformPKCEFlow` → `WebAuthSession`, `AndroidPKCEFlow` → `AndroidWebAuthSession`, and
+  `IosPKCEFlow` → `IosWebAuthSession`.
+* **Breaking:** each `WebAuthSession` now receives its completion handler once, at construction,
+  instead of on every `startSignIn` call. `startSignIn(signInUrl, redirectUrl)` no longer takes a
+  handler; `AndroidWebAuthSession(activity, completionHandler)` and
+  `IosWebAuthSession(completionHandler)` take it in their constructors; and `PKCEFlow` now takes a
+  `WebAuthSessionFactory` (a `fun interface`, so a lambda or a constructor reference like
+  `::IosWebAuthSession` still works, but it can also be provided by type from a DI graph) that it
+  calls with its own `continueSignInWithCallbackOrError`. On Android that single handler is what
+  lets an Auth Tab sign-in interrupted by an Activity recreation (e.g. a rotation) complete when
+  its result is redelivered to the rebuilt session, instead of being dropped and forcing the user to
+  start over. If the sign-in is lost entirely (e.g. process death clears the in-memory PKCE
+  verifier), `PKCEFlow` finishes with a clear "try again" error rather than a confusing internal one.
+* **Breaking:** `PKCEFlow`'s `externalScope` constructor parameter is renamed `applicationScope`, to
+  signal it should be an app-lifetime scope — it launches the token exchange, which shouldn't be
+  cancelled by UI teardown.
+* Add a `WebAuthSessionCompletionHandler` typealias (`(callbackUrl: String?, errorMessage: String?) ->
+  Unit`) naming the handler a `WebAuthSession` reports its result (the redirect URL, or an error) to.
+
 ## [0.2.0] - 2026-07-20
 
 * Bump ktlint to 1.8.0. See [#10](https://github.com/collectiveidea/oauth-kmp/pull/10).

@@ -12,14 +12,14 @@ import io.ktor.http.headersOf
 import io.ktor.http.withCharset
 import io.ktor.utils.io.charsets.Charsets
 
-class TestPlatformPKCEFlow(
+class TestWebAuthSession(
+    private val completionHandler: WebAuthSessionCompletionHandler,
     val automaticallyInvokeCompletionCallback: Boolean = false,
     val simulateError: Boolean = false,
-) : PlatformPKCEFlow {
+) : WebAuthSession {
     override fun startSignIn(
         signInUrl: String,
         redirectUrl: String,
-        completionHandler: (String?, String?) -> Unit,
     ) {
         if (automaticallyInvokeCompletionCallback) {
             if (simulateError) {
@@ -29,6 +29,17 @@ class TestPlatformPKCEFlow(
             }
         }
     }
+}
+
+/**
+ * Builds the factory that [PKCEFlow] expects: [PKCEFlow] supplies the completion handler, and this
+ * returns a [TestWebAuthSession] wired to it.
+ */
+fun testWebAuthSession(
+    automaticallyInvokeCompletionCallback: Boolean = false,
+    simulateError: Boolean = false,
+): WebAuthSessionFactory = WebAuthSessionFactory { completionHandler ->
+    TestWebAuthSession(completionHandler, automaticallyInvokeCompletionCallback, simulateError)
 }
 
 private fun createOAuthHttpClient(engine: HttpClientEngine) = HttpClient(engine) {

@@ -18,7 +18,6 @@ import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.not
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,11 +34,14 @@ import java.util.concurrent.TimeUnit
  * vs. Custom Tab fallback) deterministically; [withoutOverrideBranchesOnRealAuthTabSupport] leaves
  * it unset to exercise the real `CustomTabsClient.isAuthTabSupported()` detection.
  *
+ * The session reports its result to the single completion handler [AuthTabTestActivity] wires up,
+ * which records it into [AuthTabTestActivity.result].
+ *
  * Note: `intended(...)` is always asserted inside the `ActivityScenario.use { }` block, i.e. while
  * the host activity is still RESUMED — Espresso-Intents needs a resumed activity to run the check.
  */
 @RunWith(AndroidJUnit4::class)
-class AndroidPKCEFlowTest {
+class AndroidWebAuthSessionTest {
     private val signInUrl = "https://www.example.com/path/oauth/authorize?client_id=abc"
     private val redirectUrl = "exampleapp://oauth"
 
@@ -104,16 +106,17 @@ class AndroidPKCEFlowTest {
 
     @Test
     fun unsupportedBrowserFallsBackToACustomTab() {
+        AuthTabTestActivity.result = null
+
         // Intercept the external launch so no real browser opens.
         intending(not(isInternal())).respondWith(
             ActivityResult(AuthTabIntent.RESULT_CANCELED, null),
         )
 
-        var handlerInvoked = false
         ActivityScenario.launch(AuthTabTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                activity.flow.authTabSupportedOverride = false
-                activity.flow.startSignIn(signInUrl, redirectUrl) { _, _ -> handlerInvoked = true }
+                activity.session.authTabSupportedOverride = false
+                activity.session.startSignIn(signInUrl, redirectUrl)
             }
 
             // A plain Custom Tab (ACTION_VIEW for the sign-in URL), not an Auth Tab.
@@ -127,7 +130,7 @@ class AndroidPKCEFlowTest {
         }
 
         // The Custom Tab fallback delivers its result via onNewIntent, not the completion handler.
-        assertFalse("completion handler should not fire for the Custom Tab fallback", handlerInvoked)
+        assertNull("completion handler should not fire for the Custom Tab fallback", AuthTabTestActivity.result)
     }
 
     @Test
@@ -144,7 +147,7 @@ class AndroidPKCEFlowTest {
                 val browserPackage = CustomTabsClient.getPackageName(activity, emptyList())
                 authTabSupported =
                     browserPackage != null && CustomTabsClient.isAuthTabSupported(activity, browserPackage)
-                activity.flow.startSignIn(signInUrl, redirectUrl) { _, _ -> }
+                activity.session.startSignIn(signInUrl, redirectUrl)
             }
 
             val launchesAuthTab = hasExtra(AuthTabIntent.EXTRA_LAUNCH_AUTH_TAB, true)
@@ -158,31 +161,47 @@ class AndroidPKCEFlowTest {
         }
     }
 
-    /**
-     * Forces the Auth Tab branch, launches the test host, kicks off [AndroidPKCEFlow.startSignIn],
-     * runs [verifyLaunch] while the activity is still resumed, and returns the (callbackUrl,
-     * errorMessage) delivered to the completion handler once the stubbed Auth Tab result is
-     * dispatched back to the launcher.
-     */
-    private fun runAuthTabSignIn(verifyLaunch: () -> Unit = {}): Pair<String?, String?> {
-        val latch = CountDownLatch(1)
-        var url: String? = null
-        var error: String? = null
+    @Test
+    fun deliverAuthTabResultRoutesToTheCompletionHandler() {
+        // Simulates a result redelivered to a session reconstructed after the sign-in launched (e.g.
+        // across a recreation): it arrives with no startSignIn call in flight and must still reach the
+        // completion handler. The real Activity Result redelivery only happens across an actual
+        // recreation, so drive the launcher's delivery path directly rather than through startSignIn.
+        AuthTabTestActivity.result = null
+        val callbackUrl = "exampleapp://oauth?code=the-auth-code"
 
         ActivityScenario.launch(AuthTabTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                activity.flow.authTabSupportedOverride = true
-                activity.flow.startSignIn(signInUrl, redirectUrl) { callbackUrl, errorMessage ->
-                    url = callbackUrl
-                    error = errorMessage
-                    latch.countDown()
-                }
+                activity.session.deliverAuthTabResult(AuthTabIntent.RESULT_OK, callbackUrl)
+            }
+        }
+
+        assertEquals(callbackUrl to null, AuthTabTestActivity.result)
+    }
+
+    /**
+     * Forces the Auth Tab branch, launches the test host, kicks off [AndroidWebAuthSession.startSignIn],
+     * runs [verifyLaunch] while the activity is still resumed, and returns the (callbackUrl,
+     * errorMessage) the session's completion handler records once the stubbed Auth Tab result is
+     * dispatched back to the launcher.
+     */
+    private fun runAuthTabSignIn(verifyLaunch: () -> Unit = {}): Pair<String?, String?> {
+        AuthTabTestActivity.result = null
+        AuthTabTestActivity.resultLatch = CountDownLatch(1)
+
+        ActivityScenario.launch(AuthTabTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.session.authTabSupportedOverride = true
+                activity.session.startSignIn(signInUrl, redirectUrl)
             }
 
             verifyLaunch()
-            assertTrue("completion handler was not invoked", latch.await(5, TimeUnit.SECONDS))
+            assertTrue(
+                "completion handler was not invoked",
+                AuthTabTestActivity.resultLatch.await(5, TimeUnit.SECONDS),
+            )
         }
 
-        return url to error
+        return AuthTabTestActivity.result!!
     }
 }

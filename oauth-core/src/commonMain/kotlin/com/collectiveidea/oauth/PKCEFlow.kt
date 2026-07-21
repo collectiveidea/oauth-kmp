@@ -18,7 +18,9 @@ import kotlin.random.Random
  *
  * This class is typically a singleton, since only one PKCE Flow happens at a time.
  *
- * @param platformPKCEFlow The platform-native implementation that handles the external auth session.
+ * @param webAuthSessionFactory Builds the platform-native [WebAuthSession], handing it the completion
+ *  handler (this `PKCEFlow`'s [continueSignInWithCallbackOrError]) that the external auth session
+ *  should report its result to.
  * @param oauthService
  * @param oauthBaseUrl The fully qualified URL up until the "oauth" in the path. That is, if the sign
  *  in URL is "https://www.example.com/path/oauth/authorize", then this should be
@@ -26,18 +28,20 @@ import kotlin.random.Random
  * @param redirectUrl The app-scheme URL and path that the external sign in process should use to transfer
  * control back to the application after external authorization session finishes.
  *  This must be the scheme that your app is registered to handle. A typical example is "exampleapp://auth"
- * @param externalScope The scope to use to launch the network request that exchanges the challenge code
- *  returned to the app (from the external authorization session) for the first set of access/refresh tokens.
+ * @param applicationScope A long-lived (app-lifetime) scope used to launch the token exchange — the
+ *  network request that swaps the authorization code for the first set of access/refresh tokens. It
+ *  should outlive the UI so an in-flight exchange isn't cancelled if the user leaves the screen; the
+ *  request itself runs on [ioDispatcher].
  * @param ioDispatcher The coroutine context to move the network request to, typically `Dispatchers.IO`
  * @param random This should _always_ be `SecureRandom()`, but we allow constructor injection here in order
  *  to control the randomization values generated under test.
  */
 public class PKCEFlow(
-    private val platformPKCEFlow: PlatformPKCEFlow,
+    webAuthSessionFactory: WebAuthSessionFactory,
     private val oauthService: OAuthService,
     private val oauthBaseUrl: String,
     private val redirectUrl: String,
-    private val externalScope: CoroutineScope,
+    private val applicationScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
     private val random: Random = SecureRandom(),
 ) {
@@ -60,6 +64,14 @@ public class PKCEFlow(
     public val authState: StateFlow<PKCEAuthState> = _authState.asStateFlow()
 
     private var verifier: String? = null
+
+    // The web auth session is built here (not passed in ready-made) so it can be handed this
+    // PKCEFlow's continuation up front, which resolves the PKCEFlow <-> WebAuthSession circular
+    // dependency and lets each platform report results to a single handler set once at
+    // construction. It is declared after the state properties above so a factory that invokes the
+    // handler immediately still finds them initialized.
+    private val webAuthSession: WebAuthSession =
+        webAuthSessionFactory.create(::continueSignInWithCallbackOrError)
 
     /**
      * Constructs the sign-in URL to open in an external web browser so that the user
@@ -103,7 +115,7 @@ public class PKCEFlow(
         }
 
         val signInUrl = buildSignInUrl()
-        platformPKCEFlow.startSignIn(signInUrl, redirectUrl, ::continueSignInWithCallbackOrError)
+        webAuthSession.startSignIn(signInUrl, redirectUrl)
     }
 
     /**
@@ -124,11 +136,24 @@ public class PKCEFlow(
             }
         } else {
             val code = extractCodeFrom(callbackUrl)
+            // Capture the verifier once: it is generated in startSignIn, held only in memory, and
+            // cleared by resetState, so read it before the coroutine below could observe a change.
+            val verifier = verifier
             if (code.isNullOrBlank()) {
                 _authState.update {
                     PKCEAuthState(
                         PKCEAuthState.State.FINISHED,
                         errorMessage = "Authorization code missing from external sign in.",
+                    )
+                }
+            } else if (verifier == null) {
+                // No verifier means this result was redelivered to a PKCEFlow reconstructed after
+                // the original sign-in was lost (e.g. process death), so the code can't be
+                // exchanged.
+                _authState.update {
+                    PKCEAuthState(
+                        PKCEAuthState.State.FINISHED,
+                        errorMessage = "Sign in expired before it could be completed. Please try signing in again.",
                     )
                 }
             } else {
@@ -138,8 +163,8 @@ public class PKCEFlow(
                     )
                 }
 
-                externalScope.launch {
-                    exchangeAuthorizationCode(code)
+                applicationScope.launch {
+                    exchangeAuthorizationCode(code, verifier)
                 }
             }
         }
@@ -155,10 +180,13 @@ public class PKCEFlow(
         null
     }
 
-    private suspend fun exchangeAuthorizationCode(code: String) {
+    private suspend fun exchangeAuthorizationCode(
+        code: String,
+        verifier: String,
+    ) {
         try {
             val tokenResponse = withContext(ioDispatcher) {
-                oauthService.exchangeAuthorizationCode(code, verifier!!, redirectUrl)
+                oauthService.exchangeAuthorizationCode(code, verifier, redirectUrl)
             }
 
             _authState.update {

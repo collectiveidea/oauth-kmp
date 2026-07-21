@@ -6,7 +6,6 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
@@ -19,7 +18,7 @@ class PKCEFlowTest {
     @Test
     fun `buildSignInUrl returns correct URL`() {
         val pkceFlow = PKCEFlow(
-            TestPlatformPKCEFlow(),
+            testWebAuthSession(),
             createOAuthService(
                 MockEngine {
                     fail("should not be invoked")
@@ -27,7 +26,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            MainScope(),
+            CoroutineScope(Dispatchers.Unconfined),
             Dispatchers.IO,
             // We use a known Random seed of 1234 to always get the same code challenge under test
             random = Random(1234),
@@ -50,9 +49,9 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow happy path completes successfully`() = runTest {
+    fun `PKCEFlow happy path completes successfully`() = runTest {
         val pkceFlow = PKCEFlow(
-            TestPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
@@ -62,7 +61,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -131,9 +130,9 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow happy path completes successfully when manually invoking completion callback`() = runTest {
+    fun `PKCEFlow happy path completes successfully when manually invoking completion callback`() = runTest {
         val pkceFlow = PKCEFlow(
-            TestPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = false,
             ),
             createOAuthService(
@@ -143,7 +142,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -202,9 +201,9 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error message when platform invoke callback with error message`() = runTest {
+    fun `PKCEFlow reports error message when platform invoke callback with error message`() = runTest {
         val pkceFlow = PKCEFlow(
-            TestPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
                 simulateError = true,
             ),
@@ -215,7 +214,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -259,9 +258,9 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error message when server rejects authorization code`() = runTest {
+    fun `PKCEFlow reports error message when server rejects authorization code`() = runTest {
         val pkceFlow = PKCEFlow(
-            TestPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
@@ -271,7 +270,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -323,9 +322,9 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error message when authorization code fails`() = runTest {
+    fun `PKCEFlow reports error message when authorization code fails`() = runTest {
         val pkceFlow = PKCEFlow(
-            TestPlatformPKCEFlow(
+            testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
             createOAuthService(
@@ -335,7 +334,7 @@ class PKCEFlowTest {
             ),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
-            externalScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             ioDispatcher = Dispatchers.IO,
         )
 
@@ -377,6 +376,52 @@ class PKCEFlowTest {
                     state = PKCEFlow.PKCEAuthState.State.FINISHED,
                     tokenResponse = null,
                     errorMessage = "Simulated Network Error",
+                ),
+                turbine.awaitItem(),
+            )
+
+            turbine.ensureAllEventsConsumed()
+        }
+    }
+
+    @Test
+    fun `PKCEFlow reports error when continuing a callback without a verifier`() = runTest {
+        val pkceFlow = PKCEFlow(
+            testWebAuthSession(),
+            createOAuthService(
+                MockEngine {
+                    fail("token exchange must not be attempted without a verifier")
+                },
+            ),
+            oauthBaseUrl = "https://www.example.com/path/",
+            redirectUrl = "exampleapp://oauth",
+            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            ioDispatcher = Dispatchers.IO,
+        )
+
+        turbineScope {
+            val turbine = pkceFlow.authState.testIn(backgroundScope)
+
+            // Initial state
+
+            assertEquals(
+                PKCEFlow.PKCEAuthState(
+                    state = PKCEFlow.PKCEAuthState.State.NOT_STARTED,
+                ),
+                turbine.awaitItem(),
+            )
+
+            // Deliver a valid callback without a preceding startSignIn, mimicking a result
+            // redelivered to a PKCEFlow reconstructed after the sign-in (and its verifier) was
+            // lost. It should finish with an error rather than attempt an exchange with a missing
+            // verifier.
+
+            pkceFlow.continueSignInWithCallbackOrError("exampleapp://oauth?code=the-auth-code", null)
+
+            assertEquals(
+                PKCEFlow.PKCEAuthState(
+                    state = PKCEFlow.PKCEAuthState.State.FINISHED,
+                    errorMessage = "Sign in expired before it could be completed. Please try signing in again.",
                 ),
                 turbine.awaitItem(),
             )
