@@ -32,8 +32,8 @@ import androidx.browser.customtabs.CustomTabsIntent
  * (this one included) in the same order on every creation; the unconditional construction above
  * already provides that.
  *
- * A full process death still loses an in-flight sign-in: the recreated flow's PKCE verifier is gone,
- * so a redelivered callback URL can no longer be exchanged — [PKCEFlow] finishes with an error and
+ * A full process death still loses an in-flight sign-in: the recreated [PKCEFlow]'s verifier is
+ * gone, so a redelivered callback URL can no longer be exchanged — it finishes with an error and
  * the user must restart sign-in.
  *
  * @param activity the host Activity, used to register the Auth Tab launcher and launch the browser.
@@ -52,7 +52,7 @@ public class AndroidWebAuthSession(
 
     /**
      * Routes an Auth Tab result to [completionHandler]. `internal` rather than private only so tests
-     * can simulate a result redelivered to a freshly-recreated flow — the real Activity Result
+     * can simulate a result redelivered to a freshly-recreated session — the real Activity Result
      * redelivery happens only across an actual Activity recreation, which can't be staged against the
      * stubbed launcher under test.
      */

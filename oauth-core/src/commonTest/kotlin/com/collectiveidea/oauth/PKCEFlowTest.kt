@@ -49,7 +49,7 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow happy path completes successfully`() = runTest {
+    fun `PKCEFlow happy path completes successfully`() = runTest {
         val pkceFlow = PKCEFlow(
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
@@ -130,7 +130,7 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow happy path completes successfully when manually invoking completion callback`() = runTest {
+    fun `PKCEFlow happy path completes successfully when manually invoking completion callback`() = runTest {
         val pkceFlow = PKCEFlow(
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = false,
@@ -201,7 +201,7 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error message when platform invoke callback with error message`() = runTest {
+    fun `PKCEFlow reports error message when platform invoke callback with error message`() = runTest {
         val pkceFlow = PKCEFlow(
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
@@ -258,7 +258,7 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error message when server rejects authorization code`() = runTest {
+    fun `PKCEFlow reports error message when server rejects authorization code`() = runTest {
         val pkceFlow = PKCEFlow(
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
@@ -322,7 +322,7 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error message when authorization code fails`() = runTest {
+    fun `PKCEFlow reports error message when authorization code fails`() = runTest {
         val pkceFlow = PKCEFlow(
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
@@ -385,7 +385,7 @@ class PKCEFlowTest {
     }
 
     @Test
-    fun `flow reports error when continuing a callback without a verifier`() = runTest {
+    fun `PKCEFlow reports error when continuing a callback without a verifier`() = runTest {
         val pkceFlow = PKCEFlow(
             testWebAuthSession(),
             createOAuthService(
@@ -412,8 +412,9 @@ class PKCEFlowTest {
             )
 
             // Deliver a valid callback without a preceding startSignIn, mimicking a result
-            // redelivered to a flow reconstructed after the sign-in (and its verifier) was lost. It
-            // should finish with an error rather than attempt an exchange with a missing verifier.
+            // redelivered to a PKCEFlow reconstructed after the sign-in (and its verifier) was
+            // lost. It should finish with an error rather than attempt an exchange with a missing
+            // verifier.
 
             pkceFlow.continueSignInWithCallbackOrError("exampleapp://oauth?code=the-auth-code", null)
 

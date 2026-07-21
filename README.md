@@ -133,8 +133,8 @@ override fun onNewIntent(intent: Intent) {
 If the `Activity` is recreated while a sign-in is in flight (e.g. under memory pressure),
 `CurrentActivityWebAuthSession` rebinds the recreated `Activity` and the redelivered result still
 completes — which is why `PKCEFlow` must outlive the `Activity` (hence the singleton). If the whole
-process is killed the PKCE verifier is lost, so the flow finishes with an error and the user restarts
-sign-in.
+process is killed the PKCE verifier is lost, so `PKCEFlow` finishes with an error and the user
+restarts sign-in.
 
 ### iOS
 

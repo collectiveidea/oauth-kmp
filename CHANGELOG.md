@@ -26,9 +26,9 @@ BREAKING API Changes and Additions. See [#15](https://github.com/collectiveidea/
   `::IosWebAuthSession` still works, but it can also be provided by type from a DI graph) that it
   calls with its own `continueSignInWithCallbackOrError`. On Android that single handler is what
   lets an Auth Tab sign-in interrupted by an Activity recreation (e.g. a rotation) complete when
-  its result is redelivered to the rebuilt flow, instead of being dropped and forcing the user to
+  its result is redelivered to the rebuilt session, instead of being dropped and forcing the user to
   start over. If the sign-in is lost entirely (e.g. process death clears the in-memory PKCE
-  verifier), the flow finishes with a clear "try again" error rather than a confusing internal one.
+  verifier), `PKCEFlow` finishes with a clear "try again" error rather than a confusing internal one.
 * **Breaking:** `PKCEFlow`'s `externalScope` constructor parameter is renamed `applicationScope`, to
   signal it should be an app-lifetime scope — it launches the token exchange, which shouldn't be
   cancelled by UI teardown.

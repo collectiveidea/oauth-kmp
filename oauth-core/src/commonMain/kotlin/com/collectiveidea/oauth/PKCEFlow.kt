@@ -19,8 +19,8 @@ import kotlin.random.Random
  * This class is typically a singleton, since only one PKCE Flow happens at a time.
  *
  * @param webAuthSessionFactory Builds the platform-native [WebAuthSession], handing it the completion
- *  handler (this flow's [continueSignInWithCallbackOrError]) that the external auth session should
- *  report its result to.
+ *  handler (this `PKCEFlow`'s [continueSignInWithCallbackOrError]) that the external auth session
+ *  should report its result to.
  * @param oauthService
  * @param oauthBaseUrl The fully qualified URL up until the "oauth" in the path. That is, if the sign
  *  in URL is "https://www.example.com/path/oauth/authorize", then this should be
@@ -65,11 +65,11 @@ public class PKCEFlow(
 
     private var verifier: String? = null
 
-    // The platform flow is built here (not passed in ready-made) so it can be handed this flow's
-    // continuation up front, which resolves the PKCEFlow <-> platform-flow circular dependency and
-    // lets each platform report results to a single handler set once at construction. It is
-    // declared after the state properties above so a factory that invokes the handler immediately
-    // still finds them initialized.
+    // The web auth session is built here (not passed in ready-made) so it can be handed this
+    // PKCEFlow's continuation up front, which resolves the PKCEFlow <-> WebAuthSession circular
+    // dependency and lets each platform report results to a single handler set once at
+    // construction. It is declared after the state properties above so a factory that invokes the
+    // handler immediately still finds them initialized.
     private val webAuthSession: WebAuthSession =
         webAuthSessionFactory.create(::continueSignInWithCallbackOrError)
 
@@ -147,8 +147,9 @@ public class PKCEFlow(
                     )
                 }
             } else if (verifier == null) {
-                // No verifier means this result was redelivered to a flow reconstructed after the
-                // original sign-in was lost (e.g. process death), so the code can't be exchanged.
+                // No verifier means this result was redelivered to a PKCEFlow reconstructed after
+                // the original sign-in was lost (e.g. process death), so the code can't be
+                // exchanged.
                 _authState.update {
                     PKCEAuthState(
                         PKCEAuthState.State.FINISHED,
