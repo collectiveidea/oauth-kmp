@@ -18,15 +18,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   `IosPKCEFlow` → `IosWebAuthSession`.
 * **Breaking:** each `WebAuthSession` now receives its completion handler once, at construction,
   instead of on every `startSignIn` call. `startSignIn(signInUrl, redirectUrl)` no longer takes a
-  handler; `AndroidWebAuthSession(activity, completionHandler)` and `IosWebAuthSession(completionHandler)` take it
-  in their constructors; and `PKCEFlow` now takes a `WebAuthSessionFactory` (a `fun interface`, so a
-  lambda or a constructor reference like `::IosWebAuthSession` still works, but it can also be
-  provided by type from a DI graph) that it calls with its own `continueSignInWithCallbackOrError`. On Android that single handler is what lets an Auth Tab sign-in
-  interrupted by an Activity recreation (e.g. a rotation) complete when its result is redelivered to
-  the rebuilt flow, instead of being dropped and forcing the user to start over — it replaces the
-  earlier `completionHandlerAfterRecreate` parameter. If the sign-in is lost entirely (e.g. process
-  death clears the in-memory PKCE verifier), the flow finishes with a clear "try again" error rather
-  than a confusing internal one.
+  handler; `AndroidWebAuthSession(activity, completionHandler)` and
+  `IosWebAuthSession(completionHandler)` take it in their constructors; and `PKCEFlow` now takes a
+  `WebAuthSessionFactory` (a `fun interface`, so a lambda or a constructor reference like
+  `::IosWebAuthSession` still works, but it can also be provided by type from a DI graph) that it
+  calls with its own `continueSignInWithCallbackOrError`. On Android that single handler is what
+  lets an Auth Tab sign-in interrupted by an Activity recreation (e.g. a rotation) complete when
+  its result is redelivered to the rebuilt flow, instead of being dropped and forcing the user to
+  start over. If the sign-in is lost entirely (e.g. process death clears the in-memory PKCE
+  verifier), the flow finishes with a clear "try again" error rather than a confusing internal one.
 
 ## [0.2.0] - 2026-07-20
 
