@@ -1,0 +1,28 @@
+---
+title: Android wiring at construction time
+---
+sequenceDiagram
+    autonumber
+    box rgb(232, 240, 254) App code
+        participant DI as App startup / DI graph
+        participant Activity as MainActivity
+    end
+    box rgb(232, 245, 233) oauth-kmp library
+        participant PKCEFlow as PKCEFlow (app singleton)
+        participant Holder as CurrentActivityWebAuthSession (app singleton)
+        participant Session as AndroidWebAuthSession (one per Activity)
+    end
+    box rgb(255, 243, 224) OS
+        participant ARA as Activity Result API
+    end
+
+    DI->>Holder: CurrentActivityWebAuthSession()
+    DI->>PKCEFlow: PKCEFlow(webAuthSessionFactory = holder.factory, …)
+    PKCEFlow->>Holder: factory.create(::continueSignInWithCallbackOrError)
+    Note over Holder: ★ captures completionHandler =<br/>PKCEFlow::continueSignInWithCallbackOrError —<br/>the return path exists before any sign-in starts
+    Holder-->>PKCEFlow: returns itself, so PKCEFlow.webAuthSession = holder
+    Activity->>Holder: onCreate — bindTo(this)
+    Holder->>Session: AndroidWebAuthSession(activity, completionHandler)
+    Session->>ARA: AuthTabIntent.registerActivityResultLauncher(activity, callback)
+    Note over Session, ARA: ★ must happen before the Activity is STARTED — the OS matches redelivered<br/>results to launchers by registration order, so every (re)creation must<br/>register the same launchers in the same order
+    Note over Holder: delegate = session — a lifecycle observer keeps the binding on the foreground<br/>Activity (onResume reclaims it, onDestroy releases it only if still the owner)

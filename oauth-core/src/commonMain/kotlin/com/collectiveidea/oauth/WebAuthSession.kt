@@ -4,6 +4,11 @@ public interface WebAuthSession {
     /**
      * Starts the PKCE OAuth flow in a platform-native external browser session.
      *
+     * Not an app entry point: [PKCEFlow.startSignIn] is what calls this, after generating the PKCE
+     * verifier and building [signInUrl] (via the `internal` [PKCEFlow.buildSignInUrl]). App code
+     * always starts a sign-in with [PKCEFlow.startSignIn] — a session started here directly has no
+     * verifier behind it, so the callback it reports could never be exchanged for tokens.
+     *
      * For [com.collectiveidea.oauth.AndroidWebAuthSession], this uses a Chrome Auth Tab when the browser
      *  supports it and otherwise falls back to a Custom Tab.
      * For [com.collectiveidea.oauth.IosWebAuthSession], this is done via AuthenticationServices.
