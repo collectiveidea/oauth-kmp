@@ -41,6 +41,18 @@ class PKCEFlowTest {
     }
 
     @Test
+    fun `buildSignInUrl encodes a redirect URL that has its own query`() {
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(Dispatchers.Unconfined),
+            redirectUrl = "exampleapp://oauth?source=app&step=2",
+        )
+
+        val parameters = Url(pkceFlow.buildSignInUrl()).parameters
+
+        assertEquals("exampleapp://oauth?source=app&step=2", parameters["redirect_uri"])
+    }
+
+    @Test
     fun `PKCEFlow happy path completes successfully`() = runTest {
         val pkceFlow = createPKCEFlow(
             CoroutineScope(StandardTestDispatcher(testScheduler)),

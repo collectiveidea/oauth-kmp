@@ -1,6 +1,7 @@
 package com.collectiveidea.oauth
 
 import com.chrynan.krypt.csprng.SecureRandom
+import io.ktor.http.URLBuilder
 import io.ktor.http.URLParserException
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
@@ -85,24 +86,15 @@ public class PKCEFlow(
         val method = PKCEUtil.CodeChallengeMethod.S256
         val challenge = pkce.createCodeChallenge(verifier!!, method)
 
-        // Could attempt to use KTor internals here to build the URL, but it's non-obvious so
-        // we just roll our own since this is pretty simple.
-        val authParams = mapOf(
-            "client_id" to oauthService.clientId,
-            "redirect_uri" to urlEncodedRedirectUrl,
-            "response_type" to "code",
-            "scope" to "public+write", // Uses + here instead of space to URL-encode
-            "code_challenge" to challenge,
-            "code_challenge_method" to method.typeName,
-        ).map { (k, v) -> "$k=$v" }.joinToString("&")
-
-        return "${oauthBaseUrl}oauth/authorize?$authParams"
-    }
-
-    // Supply our own trivial helper to URL-encode the redirect URL, since it needs to
-    // be passed as a query param to the OAuth sign in URL.
-    private val urlEncodedRedirectUrl: String get() {
-        return redirectUrl.split("://").joinToString("%3A%2F%2F")
+        return URLBuilder("${oauthBaseUrl}oauth/authorize")
+            .apply {
+                parameters.append("client_id", oauthService.clientId)
+                parameters.append("redirect_uri", redirectUrl)
+                parameters.append("response_type", "code")
+                parameters.append("scope", "public write")
+                parameters.append("code_challenge", challenge)
+                parameters.append("code_challenge_method", method.typeName)
+            }.buildString()
     }
 
     /**
