@@ -34,6 +34,9 @@ import kotlin.random.Random
  *  should outlive the UI so an in-flight exchange isn't cancelled if the user leaves the screen; the
  *  request itself runs on [ioDispatcher].
  * @param ioDispatcher The coroutine context to move the network request to, typically `Dispatchers.IO`
+ * @param scopes The scopes to request, sent space-separated as the authorization request's `scope`. When empty (the
+ *  default), the request carries no `scope` and the server applies its default scopes, per
+ *  [RFC 6749 §3.3](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
  * @param random This should _always_ be `SecureRandom()`, but we allow constructor injection here in order
  *  to control the randomization values generated under test.
  */
@@ -44,6 +47,7 @@ public class PKCEFlow(
     private val redirectUrl: String,
     private val applicationScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
+    private val scopes: List<String> = emptyList(),
     private val random: Random = SecureRandom(),
 ) {
     private val pkce by lazy { PKCEUtil(random) }
@@ -91,7 +95,7 @@ public class PKCEFlow(
                 parameters.append("client_id", oauthService.clientId)
                 parameters.append("redirect_uri", redirectUrl)
                 parameters.append("response_type", "code")
-                parameters.append("scope", "public write")
+                if (scopes.isNotEmpty()) parameters.append("scope", scopes.joinToString(" "))
                 parameters.append("code_challenge", challenge)
                 parameters.append("code_challenge_method", method.typeName)
             }.buildString()

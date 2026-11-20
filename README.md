@@ -77,6 +77,7 @@ fun createPKCEFlow(
         redirectUrl = "exampleapp://oauth",
         applicationScope = applicationScope,
         ioDispatcher = Dispatchers.IO,
+        scopes = listOf("public", "write"), // or omit to get the server's default scopes
     )
 }
 ```

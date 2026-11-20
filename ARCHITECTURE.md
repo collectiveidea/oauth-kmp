@@ -71,7 +71,7 @@ resetState(): back to NOT_STARTED from anywhere; clears the tokens and the verif
 
 The sign-in URL built on the way into `WAITING_FOR_AUTHORIZATION_CODE` is
 `{oauthBaseUrl}oauth/authorize` carrying `client_id`, the URL-encoded `redirect_uri`,
-`response_type=code`, a (currently hardcoded) `scope=public+write`, and the `code_challenge` +
+`response_type=code`, the space-separated `scopes` as `scope` (omitted when there are none), and the `code_challenge` +
 `code_challenge_method=S256` derived from a freshly generated verifier. The verifier itself never
 leaves memory — it is held in a private field until the exchange, and is deliberately not
 persisted anywhere.

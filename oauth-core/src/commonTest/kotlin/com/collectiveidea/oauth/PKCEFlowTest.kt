@@ -11,6 +11,7 @@ import kotlinx.io.IOException
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.fail
 
 class PKCEFlowTest {
@@ -20,6 +21,7 @@ class PKCEFlowTest {
             CoroutineScope(Dispatchers.Unconfined),
             oauthBaseUrl = "https://www.example.com/path/",
             redirectUrl = "exampleapp://oauth",
+            scopes = listOf("public", "write"),
             // We use a known Random seed of 1234 to always get the same code challenge under test
             random = Random(1234),
         )
@@ -38,6 +40,15 @@ class PKCEFlowTest {
         assertEquals("public write", parameters["scope"])
         assertEquals("XFZKmPQOu1pBFhonCwSRnksNVNGsSigoVZObIQa1ngU", parameters["code_challenge"])
         assertEquals("S256", parameters["code_challenge_method"])
+    }
+
+    @Test
+    fun `buildSignInUrl omits scope when none are requested`() {
+        val pkceFlow = createPKCEFlow(CoroutineScope(Dispatchers.Unconfined))
+
+        val parameters = Url(pkceFlow.buildSignInUrl()).parameters
+
+        assertNull(parameters["scope"])
     }
 
     @Test

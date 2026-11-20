@@ -59,6 +59,7 @@ fun createPKCEFlow(
     engine: HttpClientEngine = MockEngine { fail("token exchange should not be attempted") },
     oauthBaseUrl: String = "https://www.example.com/path/",
     redirectUrl: String = "exampleapp://oauth",
+    scopes: List<String> = emptyList(),
     random: Random = SecureRandom(),
 ): PKCEFlow = PKCEFlow(
     webAuthSessionFactory,
@@ -67,6 +68,7 @@ fun createPKCEFlow(
     redirectUrl = redirectUrl,
     applicationScope = applicationScope,
     ioDispatcher = Dispatchers.IO,
+    scopes = scopes,
     random = random,
 )
 
