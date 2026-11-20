@@ -51,7 +51,10 @@ fun createOAuthService(engine: HttpClientEngine): OAuthService = OAuthServiceImp
     "example_client_id",
 )
 
-fun MockRequestHandleScope.respondWithOAuthTokens(includeScope: Boolean = false): HttpResponseData {
+fun MockRequestHandleScope.respondWithOAuthTokens(
+    includeScope: Boolean = false,
+    extraFields: String = "",
+): HttpResponseData {
     val scope: String = if (includeScope) ",\"scope\":\"public write\"" else ""
     return respond(
         """
@@ -60,7 +63,7 @@ fun MockRequestHandleScope.respondWithOAuthTokens(includeScope: Boolean = false)
             "token_type":"Bearer",
             "expires_in":7200,
             "refresh_token":"refresh_token_value",
-            "created_at":1661450918$scope
+            "created_at":1661450918$scope$extraFields
         }
         """.trimIndent(),
         HttpStatusCode.OK,
@@ -83,3 +86,9 @@ fun MockRequestHandleScope.respondWithOAuthError(): HttpResponseData = respond(
             .toString(),
     ),
 )
+
+fun MockRequestHandleScope.respondWithErrorBody(
+    status: HttpStatusCode,
+    contentType: ContentType,
+    content: String,
+): HttpResponseData = respond(content, status, headersOf(HttpHeaders.ContentType, contentType.toString()))
