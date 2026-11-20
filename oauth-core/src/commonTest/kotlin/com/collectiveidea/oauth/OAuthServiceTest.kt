@@ -2,33 +2,32 @@ package com.collectiveidea.oauth
 
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.content.TextContent
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class OAuthServiceTest {
-    private val jsonDecoder = Json
-
     @Test
     fun `exchangeAuthorizationCode success`() = runTest {
         val mockEngine = MockEngine {
             assertEquals("https://localhost/oauth/token", it.url.toString())
 
+            assertEquals(ContentType.Application.FormUrlEncoded, it.body.contentType?.withoutParameters())
+
             // Validate body request contains the correct information
-            val request = jsonDecoder.decodeFromString<AuthorizationCodeRequest>((it.body as TextContent).text)
-            assertEquals("example_client_id", request.clientId)
-            assertEquals("example_code", request.code)
-            assertEquals("example_verifier", request.verifier)
-            assertEquals("authorization_code", request.grantType)
-            assertEquals("exampleapp://auth", request.redirectUrl)
+            val form = (it.body as FormDataContent).formData
+            assertEquals("example_client_id", form["client_id"])
+            assertEquals("example_code", form["code"])
+            assertEquals("example_verifier", form["code_verifier"])
+            assertEquals("authorization_code", form["grant_type"])
+            assertEquals("exampleapp://auth", form["redirect_uri"])
 
             respondWithOAuthTokens(true)
         }
@@ -63,11 +62,13 @@ class OAuthServiceTest {
         val mockEngine = MockEngine {
             assertEquals("https://localhost/oauth/token", it.url.toString())
 
+            assertEquals(ContentType.Application.FormUrlEncoded, it.body.contentType?.withoutParameters())
+
             // Validate body request contains the correct information
-            val request = jsonDecoder.decodeFromString<RefreshTokensRequest>((it.body as TextContent).text)
-            assertEquals("the_valid_request_token", request.refreshToken)
-            assertEquals("example_client_id", request.clientId)
-            assertEquals("refresh_token", request.grantType)
+            val form = (it.body as FormDataContent).formData
+            assertEquals("the_valid_request_token", form["refresh_token"])
+            assertEquals("example_client_id", form["client_id"])
+            assertEquals("refresh_token", form["grant_type"])
 
             respondWithOAuthTokens()
         }

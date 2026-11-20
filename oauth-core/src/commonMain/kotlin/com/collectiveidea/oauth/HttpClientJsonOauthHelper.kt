@@ -15,7 +15,7 @@ import io.ktor.serialization.ContentConvertException
 import io.ktor.serialization.kotlinx.json.json
 
 /**
- * Configures the client for a JSON OAuth service. Every error response is thrown as an
+ * Configures the client for an OAuth service's JSON responses. Every error response is thrown as an
  * [OAuthException]: its [OAuthError] is decoded from the JSON body, or, when the body isn't JSON
  * or doesn't decode as an [OAuthError], has the code `unknown` and the raw body as its description.
  */
@@ -24,7 +24,6 @@ public fun HttpClientConfig<*>.installJsonOAuth() {
 
     defaultRequest {
         accept(ContentType.Application.Json)
-        contentType(ContentType.Application.Json)
     }
 
     install(ContentNegotiation) {

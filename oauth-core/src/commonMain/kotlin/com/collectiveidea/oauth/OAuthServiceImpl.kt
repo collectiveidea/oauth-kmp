@@ -2,9 +2,8 @@ package com.collectiveidea.oauth
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.request.forms.submitForm
+import io.ktor.http.parameters
 
 /**
  * An [OAuthService] that calls the server's token endpoint.
@@ -28,31 +27,25 @@ public class OAuthServiceImpl(
         code: String,
         verifier: String,
         redirectUrl: String,
-    ): TokenResponse {
-        val response: HttpResponse = httpClient.post(tokenEndpoint) {
-            setBody(
-                AuthorizationCodeRequest(
-                    clientId = clientId,
-                    code = code,
-                    verifier = verifier,
-                    redirectUrl = redirectUrl,
-                ),
-            )
-        }
+    ): TokenResponse = httpClient
+        .submitForm(
+            url = tokenEndpoint,
+            formParameters = parameters {
+                append("grant_type", "authorization_code")
+                append("client_id", clientId)
+                append("code", code)
+                append("code_verifier", verifier)
+                append("redirect_uri", redirectUrl)
+            },
+        ).body()
 
-        return response.body()
-    }
-
-    override suspend fun refreshTokens(refreshToken: String): TokenResponse {
-        val response: HttpResponse = httpClient.post(tokenEndpoint) {
-            setBody(
-                RefreshTokensRequest(
-                    clientId = clientId,
-                    refreshToken = refreshToken,
-                ),
-            )
-        }
-
-        return response.body()
-    }
+    override suspend fun refreshTokens(refreshToken: String): TokenResponse = httpClient
+        .submitForm(
+            url = tokenEndpoint,
+            formParameters = parameters {
+                append("grant_type", "refresh_token")
+                append("client_id", clientId)
+                append("refresh_token", refreshToken)
+            },
+        ).body()
 }

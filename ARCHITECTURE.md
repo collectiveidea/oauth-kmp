@@ -20,7 +20,7 @@ contrast, is a single API with a closure.)
 | `androidMain` | [`CurrentActivityWebAuthSession`](oauth-core/src/androidMain/kotlin/com/collectiveidea/oauth/CurrentActivityWebAuthSession.kt) | App-scoped holder that bridges the singleton `PKCEFlow` to whichever `Activity`'s `AndroidWebAuthSession` is current. |
 | `iosMain` | [`IosWebAuthSession`](oauth-core/src/iosMain/kotlin/com/collectiveidea/oauth/IosWebAuthSession.kt) | Thin wrapper over `ASWebAuthenticationSession`. |
 
-Wire types (`AuthorizationCodeRequest`, `RefreshTokensRequest`, `TokenResponse`, `OAuthError`)
+Wire types (`TokenResponse`, `OAuthError`)
 round out `commonMain`.
 
 ## The idea everything hangs on: the return path is wired before any sign-in starts
