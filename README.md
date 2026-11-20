@@ -41,7 +41,7 @@ the redirect back (with sequence diagrams) — see [ARCHITECTURE.md](ARCHITECTUR
    ```toml
    # gradle/libs.versions.toml
    [libraries]
-   oauth-core = { module = "com.collectiveidea.oauth:oauth-core", version = "0.3.0" }
+   oauth-core = { module = "com.collectiveidea.oauth:oauth-core", version = "0.4.0" }
    ```
    ```kotlin
    // shared module build.gradle.kts
