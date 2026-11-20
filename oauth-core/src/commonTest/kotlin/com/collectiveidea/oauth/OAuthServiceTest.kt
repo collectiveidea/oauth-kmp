@@ -119,6 +119,21 @@ class OAuthServiceTest {
     }
 
     @Test
+    fun `refreshTokens invalid without an error_description`() = runTest {
+        val body = """{"error":"invalid_grant"}"""
+        val oAuthService = createOAuthService(
+            MockEngine { respondWithErrorBody(HttpStatusCode.BadRequest, ContentType.Application.Json, body) },
+        )
+
+        val exception = assertFailsWith<OAuthException> {
+            oAuthService.refreshTokens("invalid_refresh_token")
+        }
+        assertEquals("invalid_grant", exception.error.code)
+        assertNull(exception.error.description)
+        assertEquals("invalid_grant", exception.message)
+    }
+
+    @Test
     fun `refreshTokens error with a non-JSON body`() = runTest {
         val body = "<html><body>502 Bad Gateway</body></html>"
         val oAuthService = createOAuthService(
