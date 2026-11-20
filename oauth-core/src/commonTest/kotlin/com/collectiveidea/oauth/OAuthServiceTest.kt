@@ -2,6 +2,8 @@ package com.collectiveidea.oauth
 
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.content.TextContent
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -90,5 +92,18 @@ class OAuthServiceTest {
             "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client.",
         )
         assertEquals(expectedError, exception.error)
+    }
+
+    @Test
+    fun `refreshTokens error with a non-JSON body`() = runTest {
+        val body = "<html><body>502 Bad Gateway</body></html>"
+        val oAuthService = createOAuthService(
+            MockEngine { respondWithErrorBody(HttpStatusCode.BadGateway, ContentType.Text.Html, body) },
+        )
+
+        val exception = assertFailsWith<OAuthException> {
+            oAuthService.refreshTokens("the_valid_request_token")
+        }
+        assertEquals(OAuthError("unknown", body), exception.error)
     }
 }

@@ -83,3 +83,9 @@ fun MockRequestHandleScope.respondWithOAuthError(): HttpResponseData = respond(
             .toString(),
     ),
 )
+
+fun MockRequestHandleScope.respondWithErrorBody(
+    status: HttpStatusCode,
+    contentType: ContentType,
+    content: String,
+): HttpResponseData = respond(content, status, headersOf(HttpHeaders.ContentType, contentType.toString()))
