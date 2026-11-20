@@ -1,7 +1,6 @@
 package com.collectiveidea.oauth
 
 import com.chrynan.krypt.csprng.SecureRandom
-import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import kotlin.random.Random
@@ -19,12 +18,6 @@ internal class PKCEUtil(
     private val random: Random = SecureRandom(),
 ) {
     /**
-     * Extension function for Okio to create URL-Safe Base64 encoding without
-     * trailing padding, required for the PKCE flow.
-     */
-    private fun ByteString.base64UrlNoPadding(): String = base64Url().dropLastWhile { it == '=' }
-
-    /**
      * Generates a "code_verifier" specified in the PKCE protocol. This value is considered a secure key.
      *
      * @see [RFC-7636](https://datatracker.ietf.org/doc/html/rfc7636#section-4.1)
@@ -32,7 +25,7 @@ internal class PKCEUtil(
     fun generateCodeVerifier(byteLength: Int = 32): String {
         val bytes = random.nextBytes(byteLength)
 
-        return bytes.toByteString().base64UrlNoPadding()
+        return bytes.toByteString().base64Url(includePadding = false)
     }
 
     /**
@@ -52,7 +45,7 @@ internal class PKCEUtil(
         method: CodeChallengeMethod = CodeChallengeMethod.S256,
     ): String = when (method) {
         CodeChallengeMethod.PLAIN -> verifier
-        CodeChallengeMethod.S256 -> verifier.encodeUtf8().sha256().base64UrlNoPadding()
+        CodeChallengeMethod.S256 -> verifier.encodeUtf8().sha256().base64Url(includePadding = false)
     }
 
     /**
