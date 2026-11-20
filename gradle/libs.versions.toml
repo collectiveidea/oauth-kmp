@@ -1,16 +1,16 @@
 [versions]
-kotlin = "2.4.10"
+kotlin = "2.4.21"
 
 # Shared
 kotlinx-coroutines = "1.11.0"
-kotlinx-serialization = "1.11.0"
+kotlinx-serialization = "1.13.0"
 krypt = "0.3.1" # For SecureRandom - https://github.com/chRyNaN/krypt
-ktor = "3.5.1"
-okio = "3.17.0" # For SHA-256 and Base64
+ktor = "3.6.1"
+okio = "3.18.2" # For SHA-256 and Base64
 turbine = "1.2.1"
 
 # Android
-agp = "9.3.0"
+agp = "9.5.2"
 androidx-activity = "1.13.0" # For the Auth Tab ActivityResult launcher
 androidx-browser = "1.10.0" # For Auth Tab (androidx.browser.auth)
 

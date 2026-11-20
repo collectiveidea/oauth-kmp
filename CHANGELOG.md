@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+* Update dependencies. See [#18](https://github.com/collectiveidea/oauth-kmp/pull/18).
+  * Kotlin to [2.4.21](https://kotlinlang.org/docs/whatsnew2420.html)
+  * kotlinx-serialization to [1.13.0](https://github.com/Kotlin/kotlinx.serialization/releases/tag/v1.13.0)
+  * Ktor to [3.6.1](https://github.com/ktorio/ktor/releases/tag/3.6.1)
+  * Okio to [3.18.2](https://github.com/square/okio/blob/master/CHANGELOG.md#version-3182)
+  * AGP to [9.5.2](https://developer.android.com/build/releases/agp-9-5-0-release-notes) / Gradle to [9.9.2](https://docs.gradle.org/9.9.2/release-notes.html)
+  * kotlinx-coroutines (1.11.0), androidx-activity (1.13.0), androidx-browser (1.10.0) and krypt (0.3.1) were already on their latest releases.
+
 ## [0.3.0] - 2026-07-21
 
 BREAKING API Changes and Additions. See [#15](https://github.com/collectiveidea/oauth-kmp/pull/15).
