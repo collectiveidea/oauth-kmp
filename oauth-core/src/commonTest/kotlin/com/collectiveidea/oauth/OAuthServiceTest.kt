@@ -40,7 +40,7 @@ class OAuthServiceTest {
         assertEquals("refresh_token_value", response.refreshToken)
         assertEquals("Bearer", response.tokenType)
         assertEquals(7200, response.expiresIn)
-        assertEquals(1661450918, response.createdAt)
+        assertEquals(1661450918L, response.createdAt)
         assertEquals("public write", response.scope)
     }
 
@@ -79,7 +79,7 @@ class OAuthServiceTest {
         assertEquals("refresh_token_value", response.refreshToken)
         assertEquals("Bearer", response.tokenType)
         assertEquals(7200, response.expiresIn)
-        assertEquals(1661450918, response.createdAt)
+        assertEquals(1661450918L, response.createdAt)
         assertNull(response.scope)
     }
 
@@ -104,6 +104,18 @@ class OAuthServiceTest {
         val response = oAuthService.refreshTokens("the_valid_request_token")
 
         assertEquals(TokenResponse(accessToken = "access_token_value", tokenType = "Bearer"), response)
+    }
+
+    @Test
+    fun `refreshTokens success with a created_at past 2038`() = runTest {
+        val body = """{"access_token":"access_token_value","token_type":"Bearer","created_at":2147483648}"""
+        val oAuthService = createOAuthService(
+            MockEngine { respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())) },
+        )
+
+        val response = oAuthService.refreshTokens("the_valid_request_token")
+
+        assertEquals(2147483648L, response.createdAt)
     }
 
     @Test
