@@ -5,29 +5,23 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.fail
 
 class PKCEFlowTest {
     @Test
     fun `buildSignInUrl returns correct URL`() {
-        val pkceFlow = PKCEFlow(
-            testWebAuthSession(),
-            createOAuthService(
-                MockEngine {
-                    fail("should not be invoked")
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
+        val pkceFlow = createPKCEFlow(
             CoroutineScope(Dispatchers.Unconfined),
-            Dispatchers.IO,
+            authorizationEndpoint = "https://www.example.com/path/oauth/authorize",
+            redirectUrl = "exampleapp://oauth",
+            scopes = listOf("public", "write"),
             // We use a known Random seed of 1234 to always get the same code challenge under test
             random = Random(1234),
         )
@@ -49,20 +43,51 @@ class PKCEFlowTest {
     }
 
     @Test
+    fun `buildSignInUrl keeps the authorization endpoint's own path and query`() {
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(Dispatchers.Unconfined),
+            authorizationEndpoint = "https://accounts.example.net/o/oauth2/auth?tenant=acme",
+        )
+
+        val url = Url(pkceFlow.buildSignInUrl())
+
+        assertEquals("accounts.example.net", url.host)
+        assertEquals("/o/oauth2/auth", url.encodedPath)
+        assertEquals("acme", url.parameters["tenant"])
+        assertEquals("example_client_id", url.parameters["client_id"])
+    }
+
+    @Test
+    fun `buildSignInUrl omits scope when none are requested`() {
+        val pkceFlow = createPKCEFlow(CoroutineScope(Dispatchers.Unconfined))
+
+        val parameters = Url(pkceFlow.buildSignInUrl()).parameters
+
+        assertNull(parameters["scope"])
+    }
+
+    @Test
+    fun `buildSignInUrl encodes a redirect URL that has its own query`() {
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(Dispatchers.Unconfined),
+            redirectUrl = "exampleapp://oauth?source=app&step=2",
+        )
+
+        val parameters = Url(pkceFlow.buildSignInUrl()).parameters
+
+        assertEquals("exampleapp://oauth?source=app&step=2", parameters["redirect_uri"])
+    }
+
+    @Test
     fun `PKCEFlow happy path completes successfully`() = runTest {
-        val pkceFlow = PKCEFlow(
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(StandardTestDispatcher(testScheduler)),
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
-            createOAuthService(
-                MockEngine {
-                    respondWithOAuthTokens()
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
-            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
-            ioDispatcher = Dispatchers.IO,
+            MockEngine {
+                respondWithOAuthTokens()
+            },
         )
 
         turbineScope {
@@ -131,19 +156,14 @@ class PKCEFlowTest {
 
     @Test
     fun `PKCEFlow happy path completes successfully when manually invoking completion callback`() = runTest {
-        val pkceFlow = PKCEFlow(
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(StandardTestDispatcher(testScheduler)),
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = false,
             ),
-            createOAuthService(
-                MockEngine {
-                    respondWithOAuthTokens()
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
-            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
-            ioDispatcher = Dispatchers.IO,
+            MockEngine {
+                respondWithOAuthTokens()
+            },
         )
 
         turbineScope {
@@ -202,20 +222,15 @@ class PKCEFlowTest {
 
     @Test
     fun `PKCEFlow reports error message when platform invoke callback with error message`() = runTest {
-        val pkceFlow = PKCEFlow(
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(StandardTestDispatcher(testScheduler)),
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
                 simulateError = true,
             ),
-            createOAuthService(
-                MockEngine {
-                    fail("should not be invoked")
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
-            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
-            ioDispatcher = Dispatchers.IO,
+            MockEngine {
+                fail("should not be invoked")
+            },
         )
 
         turbineScope {
@@ -259,19 +274,14 @@ class PKCEFlowTest {
 
     @Test
     fun `PKCEFlow reports error message when server rejects authorization code`() = runTest {
-        val pkceFlow = PKCEFlow(
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(StandardTestDispatcher(testScheduler)),
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
-            createOAuthService(
-                MockEngine {
-                    respondWithOAuthError()
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
-            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
-            ioDispatcher = Dispatchers.IO,
+            MockEngine {
+                respondWithOAuthError()
+            },
         )
 
         turbineScope {
@@ -323,19 +333,14 @@ class PKCEFlowTest {
 
     @Test
     fun `PKCEFlow reports error message when authorization code fails`() = runTest {
-        val pkceFlow = PKCEFlow(
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(StandardTestDispatcher(testScheduler)),
             testWebAuthSession(
                 automaticallyInvokeCompletionCallback = true,
             ),
-            createOAuthService(
-                MockEngine {
-                    throw IOException("Simulated Network Error")
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
-            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
-            ioDispatcher = Dispatchers.IO,
+            MockEngine {
+                throw IOException("Simulated Network Error")
+            },
         )
 
         turbineScope {
@@ -386,17 +391,12 @@ class PKCEFlowTest {
 
     @Test
     fun `PKCEFlow reports error when continuing a callback without a verifier`() = runTest {
-        val pkceFlow = PKCEFlow(
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(StandardTestDispatcher(testScheduler)),
             testWebAuthSession(),
-            createOAuthService(
-                MockEngine {
-                    fail("token exchange must not be attempted without a verifier")
-                },
-            ),
-            oauthBaseUrl = "https://www.example.com/path/",
-            redirectUrl = "exampleapp://oauth",
-            applicationScope = CoroutineScope(StandardTestDispatcher(testScheduler)),
-            ioDispatcher = Dispatchers.IO,
+            MockEngine {
+                fail("token exchange must not be attempted without a verifier")
+            },
         )
 
         turbineScope {

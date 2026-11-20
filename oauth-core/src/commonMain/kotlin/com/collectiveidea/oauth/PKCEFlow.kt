@@ -1,6 +1,7 @@
 package com.collectiveidea.oauth
 
 import com.chrynan.krypt.csprng.SecureRandom
+import io.ktor.http.URLBuilder
 import io.ktor.http.URLParserException
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
@@ -22,9 +23,8 @@ import kotlin.random.Random
  *  handler (this `PKCEFlow`'s [continueSignInWithCallbackOrError]) that the external auth session
  *  should report its result to.
  * @param oauthService
- * @param oauthBaseUrl The fully qualified URL up until the "oauth" in the path. That is, if the sign
- *  in URL is "https://www.example.com/path/oauth/authorize", then this should be
- *  "https://www.example.com/path/"
+ * @param authorizationEndpoint The server's authorization endpoint as a full URL, such as
+ *  "https://www.example.com/oauth/authorize". Query parameters it already carries are kept.
  * @param redirectUrl The app-scheme URL and path that the external sign in process should use to transfer
  * control back to the application after external authorization session finishes.
  *  This must be the scheme that your app is registered to handle. A typical example is "exampleapp://auth"
@@ -33,16 +33,20 @@ import kotlin.random.Random
  *  should outlive the UI so an in-flight exchange isn't cancelled if the user leaves the screen; the
  *  request itself runs on [ioDispatcher].
  * @param ioDispatcher The coroutine context to move the network request to, typically `Dispatchers.IO`
+ * @param scopes The scopes to request, sent space-separated as the authorization request's `scope`. When empty (the
+ *  default), the request carries no `scope` and the server applies its default scopes, per
+ *  [RFC 6749 §3.3](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
  * @param random This should _always_ be `SecureRandom()`, but we allow constructor injection here in order
  *  to control the randomization values generated under test.
  */
 public class PKCEFlow(
     webAuthSessionFactory: WebAuthSessionFactory,
     private val oauthService: OAuthService,
-    private val oauthBaseUrl: String,
+    private val authorizationEndpoint: String,
     private val redirectUrl: String,
     private val applicationScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
+    private val scopes: List<String> = emptyList(),
     private val random: Random = SecureRandom(),
 ) {
     private val pkce by lazy { PKCEUtil(random) }
@@ -85,24 +89,15 @@ public class PKCEFlow(
         val method = PKCEUtil.CodeChallengeMethod.S256
         val challenge = pkce.createCodeChallenge(verifier!!, method)
 
-        // Could attempt to use KTor internals here to build the URL, but it's non-obvious so
-        // we just roll our own since this is pretty simple.
-        val authParams = mapOf(
-            "client_id" to oauthService.clientId,
-            "redirect_uri" to urlEncodedRedirectUrl,
-            "response_type" to "code",
-            "scope" to "public+write", // Uses + here instead of space to URL-encode
-            "code_challenge" to challenge,
-            "code_challenge_method" to method.typeName,
-        ).map { (k, v) -> "$k=$v" }.joinToString("&")
-
-        return "${oauthBaseUrl}oauth/authorize?$authParams"
-    }
-
-    // Supply our own trivial helper to URL-encode the redirect URL, since it needs to
-    // be passed as a query param to the OAuth sign in URL.
-    private val urlEncodedRedirectUrl: String get() {
-        return redirectUrl.split("://").joinToString("%3A%2F%2F")
+        return URLBuilder(authorizationEndpoint)
+            .apply {
+                parameters.append("client_id", oauthService.clientId)
+                parameters.append("redirect_uri", redirectUrl)
+                parameters.append("response_type", "code")
+                if (scopes.isNotEmpty()) parameters.append("scope", scopes.joinToString(" "))
+                parameters.append("code_challenge", challenge)
+                parameters.append("code_challenge_method", method.typeName)
+            }.buildString()
     }
 
     /**

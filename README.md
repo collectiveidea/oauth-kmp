@@ -63,20 +63,20 @@ fun createPKCEFlow(
     httpClientEngine: HttpClientEngine,           // OkHttp on Android, Darwin on iOS
     applicationScope: CoroutineScope,             // app-lifetime; launches the token exchange
 ): PKCEFlow {
-    val baseUrl = "https://api.example.com/" // everything before "oauth/…", with a trailing slash
-
     val oauthService = OAuthServiceImpl(
-        httpClient = HttpClient(httpClientEngine) { installJsonOAuth(baseUrl) },
+        httpClient = HttpClient(httpClientEngine) { installJsonOAuth() },
         clientId = "your-oauth-client-id",
+        tokenEndpoint = "https://api.example.com/oauth/token",
     )
 
     return PKCEFlow(
         webAuthSessionFactory = webAuthSessionFactory,
         oauthService = oauthService,
-        oauthBaseUrl = baseUrl,
+        authorizationEndpoint = "https://api.example.com/oauth/authorize",
         redirectUrl = "exampleapp://oauth",
         applicationScope = applicationScope,
         ioDispatcher = Dispatchers.IO,
+        scopes = listOf("public", "write"), // or omit to get the server's default scopes
     )
 }
 ```

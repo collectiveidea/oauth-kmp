@@ -2,57 +2,50 @@ package com.collectiveidea.oauth
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.request.forms.submitForm
+import io.ktor.http.parameters
 
 /**
+ * An [OAuthService] that calls the server's token endpoint.
+ *
  * @param httpClient A pre-configured JSON-OAuth-ready HttpClient. Use the
  *   [com.collectiveidea.oauth.installJsonOAuth] helper for easy client creation, e.g.
  *
  *   val client = HttpClient(engine) {
- *      installJsonOAuth(baseUrl)
+ *      installJsonOAuth()
  *   }
  *
- *  @param oauthBaseUrl The base URL, with trailing slash, for OAuth requests, e.g. "https://www.example.com/path/"
- *  @param redirectUrl The PKCE redirect URL that the server will redirect the user to on successful
- *    auth. The redirect URL is used to transfer control from the external web view in the PKCE flow
- *    back to the native application. On successful auth, the URL will have a "code" query parameter
- *    appended that can be exchanged for access/refresh tokens via exchangeAuthorizationCode.
+ * @param clientId The OAuth client's id, sent with every token request.
+ * @param tokenEndpoint The server's token endpoint as a full URL, such as "https://www.example.com/oauth/token".
  */
 public class OAuthServiceImpl(
     private val httpClient: HttpClient,
     override val clientId: String,
+    private val tokenEndpoint: String,
 ) : OAuthService {
     override suspend fun exchangeAuthorizationCode(
         code: String,
         verifier: String,
         redirectUrl: String,
-    ): TokenResponse {
-        val response: HttpResponse = httpClient.post("oauth/token") {
-            setBody(
-                AuthorizationCodeRequest(
-                    clientId = clientId,
-                    code = code,
-                    verifier = verifier,
-                    redirectUrl = redirectUrl,
-                ),
-            )
-        }
+    ): TokenResponse = httpClient
+        .submitForm(
+            url = tokenEndpoint,
+            formParameters = parameters {
+                append("grant_type", "authorization_code")
+                append("client_id", clientId)
+                append("code", code)
+                append("code_verifier", verifier)
+                append("redirect_uri", redirectUrl)
+            },
+        ).body()
 
-        return response.body()
-    }
-
-    override suspend fun refreshTokens(refreshToken: String): TokenResponse {
-        val response: HttpResponse = httpClient.post("oauth/token") {
-            setBody(
-                RefreshTokensRequest(
-                    clientId = clientId,
-                    refreshToken = refreshToken,
-                ),
-            )
-        }
-
-        return response.body()
-    }
+    override suspend fun refreshTokens(refreshToken: String): TokenResponse = httpClient
+        .submitForm(
+            url = tokenEndpoint,
+            formParameters = parameters {
+                append("grant_type", "refresh_token")
+                append("client_id", clientId)
+                append("refresh_token", refreshToken)
+            },
+        ).body()
 }
