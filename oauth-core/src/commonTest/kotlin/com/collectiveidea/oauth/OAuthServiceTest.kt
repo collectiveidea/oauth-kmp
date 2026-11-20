@@ -119,6 +119,21 @@ class OAuthServiceTest {
     }
 
     @Test
+    fun `refreshTokens posts to the configured token endpoint`() = runTest {
+        val oAuthService = createOAuthService(
+            MockEngine {
+                assertEquals("https://auth.example.net/v1/token", it.url.toString())
+                respondWithOAuthTokens()
+            },
+            tokenEndpoint = "https://auth.example.net/v1/token",
+        )
+
+        val response = oAuthService.refreshTokens("the_valid_request_token")
+
+        assertEquals("access_token_value", response.accessToken)
+    }
+
+    @Test
     fun `refreshTokens invalid`() = runTest {
         val oAuthService = createOAuthService(MockEngine { respondWithOAuthError() })
 

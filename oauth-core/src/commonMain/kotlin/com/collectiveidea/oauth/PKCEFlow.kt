@@ -23,9 +23,8 @@ import kotlin.random.Random
  *  handler (this `PKCEFlow`'s [continueSignInWithCallbackOrError]) that the external auth session
  *  should report its result to.
  * @param oauthService
- * @param oauthBaseUrl The fully qualified URL up until the "oauth" in the path. That is, if the sign
- *  in URL is "https://www.example.com/path/oauth/authorize", then this should be
- *  "https://www.example.com/path/"
+ * @param authorizationEndpoint The server's authorization endpoint as a full URL, such as
+ *  "https://www.example.com/oauth/authorize". Query parameters it already carries are kept.
  * @param redirectUrl The app-scheme URL and path that the external sign in process should use to transfer
  * control back to the application after external authorization session finishes.
  *  This must be the scheme that your app is registered to handle. A typical example is "exampleapp://auth"
@@ -43,7 +42,7 @@ import kotlin.random.Random
 public class PKCEFlow(
     webAuthSessionFactory: WebAuthSessionFactory,
     private val oauthService: OAuthService,
-    private val oauthBaseUrl: String,
+    private val authorizationEndpoint: String,
     private val redirectUrl: String,
     private val applicationScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
@@ -90,7 +89,7 @@ public class PKCEFlow(
         val method = PKCEUtil.CodeChallengeMethod.S256
         val challenge = pkce.createCodeChallenge(verifier!!, method)
 
-        return URLBuilder("${oauthBaseUrl}oauth/authorize")
+        return URLBuilder(authorizationEndpoint)
             .apply {
                 parameters.append("client_id", oauthService.clientId)
                 parameters.append("redirect_uri", redirectUrl)

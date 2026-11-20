@@ -50,21 +50,21 @@ fun testWebAuthSession(
 }
 
 private fun createOAuthHttpClient(engine: HttpClientEngine) = HttpClient(engine) {
-    installJsonOAuth("https://localhost/")
+    installJsonOAuth()
 }
 
 fun createPKCEFlow(
     applicationScope: CoroutineScope,
     webAuthSessionFactory: WebAuthSessionFactory = testWebAuthSession(),
     engine: HttpClientEngine = MockEngine { fail("token exchange should not be attempted") },
-    oauthBaseUrl: String = "https://www.example.com/path/",
+    authorizationEndpoint: String = "https://www.example.com/path/oauth/authorize",
     redirectUrl: String = "exampleapp://oauth",
     scopes: List<String> = emptyList(),
     random: Random = SecureRandom(),
 ): PKCEFlow = PKCEFlow(
     webAuthSessionFactory,
     createOAuthService(engine),
-    oauthBaseUrl = oauthBaseUrl,
+    authorizationEndpoint = authorizationEndpoint,
     redirectUrl = redirectUrl,
     applicationScope = applicationScope,
     ioDispatcher = Dispatchers.IO,
@@ -72,9 +72,13 @@ fun createPKCEFlow(
     random = random,
 )
 
-fun createOAuthService(engine: HttpClientEngine): OAuthService = OAuthServiceImpl(
+fun createOAuthService(
+    engine: HttpClientEngine,
+    tokenEndpoint: String = "https://localhost/oauth/token",
+): OAuthService = OAuthServiceImpl(
     createOAuthHttpClient(engine),
     "example_client_id",
+    tokenEndpoint,
 )
 
 fun MockRequestHandleScope.respondWithOAuthTokens(

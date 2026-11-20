@@ -19,7 +19,7 @@ class PKCEFlowTest {
     fun `buildSignInUrl returns correct URL`() {
         val pkceFlow = createPKCEFlow(
             CoroutineScope(Dispatchers.Unconfined),
-            oauthBaseUrl = "https://www.example.com/path/",
+            authorizationEndpoint = "https://www.example.com/path/oauth/authorize",
             redirectUrl = "exampleapp://oauth",
             scopes = listOf("public", "write"),
             // We use a known Random seed of 1234 to always get the same code challenge under test
@@ -40,6 +40,21 @@ class PKCEFlowTest {
         assertEquals("public write", parameters["scope"])
         assertEquals("XFZKmPQOu1pBFhonCwSRnksNVNGsSigoVZObIQa1ngU", parameters["code_challenge"])
         assertEquals("S256", parameters["code_challenge_method"])
+    }
+
+    @Test
+    fun `buildSignInUrl keeps the authorization endpoint's own path and query`() {
+        val pkceFlow = createPKCEFlow(
+            CoroutineScope(Dispatchers.Unconfined),
+            authorizationEndpoint = "https://accounts.example.net/o/oauth2/auth?tenant=acme",
+        )
+
+        val url = Url(pkceFlow.buildSignInUrl())
+
+        assertEquals("accounts.example.net", url.host)
+        assertEquals("/o/oauth2/auth", url.encodedPath)
+        assertEquals("acme", url.parameters["tenant"])
+        assertEquals("example_client_id", url.parameters["client_id"])
     }
 
     @Test

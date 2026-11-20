@@ -14,8 +14,8 @@ contrast, is a single API with a closure.)
 | `commonMain` | [`PKCEFlow`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/PKCEFlow.kt) | The orchestrator. Builds the sign-in URL, receives the callback URL, exchanges the authorization code for tokens, and publishes progress as `authState: StateFlow<PKCEAuthState>`. One app-lifetime instance. |
 | `commonMain` | [`WebAuthSession`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/WebAuthSession.kt) | The platform seam: the `WebAuthSession` interface (`startSignIn(signInUrl, redirectUrl)`), the `WebAuthSessionCompletionHandler` typealias (`(callbackUrl?, errorMessage?) -> Unit`), and the `WebAuthSessionFactory` that `PKCEFlow` uses to build its session. |
 | `commonMain` | [`PKCEUtil`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/PKCEUtil.kt) | [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) helpers: a CSPRNG code verifier and its S256 code challenge (URL-safe base64, no padding). |
-| `commonMain` | [`OAuthService`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/OAuthService.kt) / [`OAuthServiceImpl`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/OAuthServiceImpl.kt) | The two token-endpoint calls, both `POST oauth/token`: `exchangeAuthorizationCode` (used by `PKCEFlow`) and `refreshTokens` (called by the app later, outside any sign-in). |
-| `commonMain` | [`installJsonOAuth`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/HttpClientJsonOauthHelper.kt) | Ktor client setup: base URL, JSON content negotiation, and mapping error responses into `OAuthException`/`OAuthError`. |
+| `commonMain` | [`OAuthService`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/OAuthService.kt) / [`OAuthServiceImpl`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/OAuthServiceImpl.kt) | The two token-endpoint calls, both a `POST` to its `tokenEndpoint`: `exchangeAuthorizationCode` (used by `PKCEFlow`) and `refreshTokens` (called by the app later, outside any sign-in). |
+| `commonMain` | [`installJsonOAuth`](oauth-core/src/commonMain/kotlin/com/collectiveidea/oauth/HttpClientJsonOauthHelper.kt) | Ktor client setup: JSON content negotiation, and mapping error responses into `OAuthException`/`OAuthError`. |
 | `androidMain` | [`AndroidWebAuthSession`](oauth-core/src/androidMain/kotlin/com/collectiveidea/oauth/AndroidWebAuthSession.kt) | Per-`Activity` session. Opens a Chrome [Auth Tab](https://developer.chrome.com/docs/android/custom-tabs/guide-auth-tab) when the browser supports one, else falls back to a Custom Tab; registers the Auth Tab result launcher at construction. |
 | `androidMain` | [`CurrentActivityWebAuthSession`](oauth-core/src/androidMain/kotlin/com/collectiveidea/oauth/CurrentActivityWebAuthSession.kt) | App-scoped holder that bridges the singleton `PKCEFlow` to whichever `Activity`'s `AndroidWebAuthSession` is current. |
 | `iosMain` | [`IosWebAuthSession`](oauth-core/src/iosMain/kotlin/com/collectiveidea/oauth/IosWebAuthSession.kt) | Thin wrapper over `ASWebAuthenticationSession`. |
@@ -62,7 +62,7 @@ WAITING_FOR_AUTHORIZATION_CODE            ← control is outside the app here
  │  or verifier lost (process death)  ──────────►  FINISHED(errorMessage)
  ▼
 EXCHANGING_AUTHORIZATION_CODE
- │  POST oauth/token — launched in applicationScope, runs on ioDispatcher
+ │  POST tokenEndpoint — launched in applicationScope, runs on ioDispatcher
  ├─ success  ──────────────────────────────────►  FINISHED(tokenResponse)
  └─ failure (OAuthException, etc.)  ────────────►  FINISHED(errorMessage)
 
@@ -70,7 +70,7 @@ resetState(): back to NOT_STARTED from anywhere; clears the tokens and the verif
 ```
 
 The sign-in URL built on the way into `WAITING_FOR_AUTHORIZATION_CODE` is
-`{oauthBaseUrl}oauth/authorize` carrying `client_id`, the URL-encoded `redirect_uri`,
+the `authorizationEndpoint` URL carrying `client_id`, the URL-encoded `redirect_uri`,
 `response_type=code`, the space-separated `scopes` as `scope` (omitted when there are none), and the `code_challenge` +
 `code_challenge_method=S256` derived from a freshly generated verifier. The verifier itself never
 leaves memory — it is held in a private field until the exchange, and is deliberately not

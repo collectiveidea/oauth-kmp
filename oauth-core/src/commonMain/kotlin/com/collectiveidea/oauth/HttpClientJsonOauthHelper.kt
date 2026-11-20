@@ -18,16 +18,11 @@ import io.ktor.serialization.kotlinx.json.json
  * Configures the client for a JSON OAuth service. Every error response is thrown as an
  * [OAuthException]: its [OAuthError] is decoded from the JSON body, or, when the body isn't JSON
  * or doesn't decode as an [OAuthError], has the code `unknown` and the raw body as its description.
- *
- * @param baseUrl The base URL of the JSON OAuth service, everything before `/oauth/<verb>` in
- *  the URL, and with a trailing slash: e.g. `https://www.example.com/path/`
  */
-public fun HttpClientConfig<*>.installJsonOAuth(baseUrl: String) {
+public fun HttpClientConfig<*>.installJsonOAuth() {
     expectSuccess = true
 
     defaultRequest {
-        url(baseUrl)
-
         accept(ContentType.Application.Json)
         contentType(ContentType.Application.Json)
     }

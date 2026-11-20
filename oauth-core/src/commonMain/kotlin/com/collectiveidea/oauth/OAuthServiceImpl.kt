@@ -7,29 +7,29 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 
 /**
+ * An [OAuthService] that calls the server's token endpoint.
+ *
  * @param httpClient A pre-configured JSON-OAuth-ready HttpClient. Use the
  *   [com.collectiveidea.oauth.installJsonOAuth] helper for easy client creation, e.g.
  *
  *   val client = HttpClient(engine) {
- *      installJsonOAuth(baseUrl)
+ *      installJsonOAuth()
  *   }
  *
- *  @param oauthBaseUrl The base URL, with trailing slash, for OAuth requests, e.g. "https://www.example.com/path/"
- *  @param redirectUrl The PKCE redirect URL that the server will redirect the user to on successful
- *    auth. The redirect URL is used to transfer control from the external web view in the PKCE flow
- *    back to the native application. On successful auth, the URL will have a "code" query parameter
- *    appended that can be exchanged for access/refresh tokens via exchangeAuthorizationCode.
+ * @param clientId The OAuth client's id, sent with every token request.
+ * @param tokenEndpoint The server's token endpoint as a full URL, such as "https://www.example.com/oauth/token".
  */
 public class OAuthServiceImpl(
     private val httpClient: HttpClient,
     override val clientId: String,
+    private val tokenEndpoint: String,
 ) : OAuthService {
     override suspend fun exchangeAuthorizationCode(
         code: String,
         verifier: String,
         redirectUrl: String,
     ): TokenResponse {
-        val response: HttpResponse = httpClient.post("oauth/token") {
+        val response: HttpResponse = httpClient.post(tokenEndpoint) {
             setBody(
                 AuthorizationCodeRequest(
                     clientId = clientId,
@@ -44,7 +44,7 @@ public class OAuthServiceImpl(
     }
 
     override suspend fun refreshTokens(refreshToken: String): TokenResponse {
-        val response: HttpResponse = httpClient.post("oauth/token") {
+        val response: HttpResponse = httpClient.post(tokenEndpoint) {
             setBody(
                 RefreshTokensRequest(
                     clientId = clientId,
