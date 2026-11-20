@@ -10,7 +10,7 @@ okio = "3.18.2" # For SHA-256 and Base64
 turbine = "1.2.1"
 
 # Android
-agp = "9.3.0"
+agp = "9.5.2"
 androidx-activity = "1.13.0" # For the Auth Tab ActivityResult launcher
 androidx-browser = "1.10.0" # For Auth Tab (androidx.browser.auth)
 
