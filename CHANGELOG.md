@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-20
+
 * Update dependencies. See [#18](https://github.com/collectiveidea/oauth-kmp/pull/18).
   * Kotlin to [2.4.21](https://kotlinlang.org/docs/whatsnew2420.html)
   * kotlinx-serialization to [1.13.0](https://github.com/Kotlin/kotlinx.serialization/releases/tag/v1.13.0)
