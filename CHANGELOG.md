@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   * Okio to [3.18.2](https://github.com/square/okio/blob/master/CHANGELOG.md#version-3182)
   * AGP to [9.5.2](https://developer.android.com/build/releases/agp-9-5-0-release-notes) / Gradle to [9.9.2](https://docs.gradle.org/9.9.2/release-notes.html)
   * kotlinx-coroutines (1.11.0), androidx-activity (1.13.0), androidx-browser (1.10.0) and krypt (0.3.1) were already on their latest releases.
+* Throw every error response from an `installJsonOAuth` client as an `OAuthException`. A JSON error body that doesn't decode as an `OAuthError` (a framework's generic error JSON, or truncated JSON) used to escape as Ktor's `JsonConvertException`; it now gets the code `unknown` and the raw body as its description, as a non-JSON body already did. See [#19](https://github.com/collectiveidea/oauth-kmp/pull/19).
 
 ## [0.3.0] - 2026-07-21
 

@@ -106,4 +106,30 @@ class OAuthServiceTest {
         }
         assertEquals(OAuthError("unknown", body), exception.error)
     }
+
+    @Test
+    fun `refreshTokens error with JSON that isn't an OAuth error`() = runTest {
+        val body = """{"message":"Internal Server Error"}"""
+        val oAuthService = createOAuthService(
+            MockEngine { respondWithErrorBody(HttpStatusCode.InternalServerError, ContentType.Application.Json, body) },
+        )
+
+        val exception = assertFailsWith<OAuthException> {
+            oAuthService.refreshTokens("the_valid_request_token")
+        }
+        assertEquals(OAuthError("unknown", body), exception.error)
+    }
+
+    @Test
+    fun `refreshTokens error with malformed JSON`() = runTest {
+        val body = """{"error":"""
+        val oAuthService = createOAuthService(
+            MockEngine { respondWithErrorBody(HttpStatusCode.BadRequest, ContentType.Application.Json, body) },
+        )
+
+        val exception = assertFailsWith<OAuthException> {
+            oAuthService.refreshTokens("the_valid_request_token")
+        }
+        assertEquals(OAuthError("unknown", body), exception.error)
+    }
 }
