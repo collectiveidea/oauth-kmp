@@ -1,9 +1,12 @@
 package com.collectiveidea.oauth
 
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import io.ktor.content.TextContent
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -89,6 +92,18 @@ class OAuthServiceTest {
 
         assertEquals("access_token_value", response.accessToken)
         assertEquals("refresh_token_value", response.refreshToken)
+    }
+
+    @Test
+    fun `refreshTokens success with only the fields RFC 6749 requires`() = runTest {
+        val body = """{"access_token":"access_token_value","token_type":"Bearer"}"""
+        val oAuthService = createOAuthService(
+            MockEngine { respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())) },
+        )
+
+        val response = oAuthService.refreshTokens("the_valid_request_token")
+
+        assertEquals(TokenResponse(accessToken = "access_token_value", tokenType = "Bearer"), response)
     }
 
     @Test
