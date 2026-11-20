@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   * AGP to [9.5.2](https://developer.android.com/build/releases/agp-9-5-0-release-notes) / Gradle to [9.9.2](https://docs.gradle.org/9.9.2/release-notes.html)
   * kotlinx-coroutines (1.11.0), androidx-activity (1.13.0), androidx-browser (1.10.0) and krypt (0.3.1) were already on their latest releases.
 * Throw every error response from an `installJsonOAuth` client as an `OAuthException`. A JSON error body that doesn't decode as an `OAuthError` (a framework's generic error JSON, or truncated JSON) used to escape as Ktor's `JsonConvertException`; it now gets the code `unknown` and the raw body as its description, as a non-JSON body already did. See [#19](https://github.com/collectiveidea/oauth-kmp/pull/19).
+* Ignore fields this library doesn't model in token and error responses, as [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-5.1) requires of a client. A token response carrying an extra field (an OpenID Connect `id_token`, say) used to fail the sign-in or refresh with Ktor's `JsonConvertException`, and an error carrying an `error_uri` lost its code to `unknown`. See [#19](https://github.com/collectiveidea/oauth-kmp/pull/19).
 
 ## [0.3.0] - 2026-07-21
 

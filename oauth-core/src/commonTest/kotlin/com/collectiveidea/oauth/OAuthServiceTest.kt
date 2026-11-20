@@ -81,6 +81,17 @@ class OAuthServiceTest {
     }
 
     @Test
+    fun `refreshTokens success with fields the client doesn't model`() = runTest {
+        val extraFields = ""","id_token":"header.payload.signature","not_modeled":{"nested":[1,2]}"""
+        val oAuthService = createOAuthService(MockEngine { respondWithOAuthTokens(extraFields = extraFields) })
+
+        val response = oAuthService.refreshTokens("the_valid_request_token")
+
+        assertEquals("access_token_value", response.accessToken)
+        assertEquals("refresh_token_value", response.refreshToken)
+    }
+
+    @Test
     fun `refreshTokens invalid`() = runTest {
         val oAuthService = createOAuthService(MockEngine { respondWithOAuthError() })
 
@@ -92,6 +103,19 @@ class OAuthServiceTest {
             "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client.",
         )
         assertEquals(expectedError, exception.error)
+    }
+
+    @Test
+    fun `refreshTokens invalid with an error_uri`() = runTest {
+        val body = """{"error":"invalid_grant","error_description":"Token revoked.","error_uri":"https://localhost/docs/errors"}"""
+        val oAuthService = createOAuthService(
+            MockEngine { respondWithErrorBody(HttpStatusCode.BadRequest, ContentType.Application.Json, body) },
+        )
+
+        val exception = assertFailsWith<OAuthException> {
+            oAuthService.refreshTokens("invalid_refresh_token")
+        }
+        assertEquals(OAuthError("invalid_grant", "Token revoked."), exception.error)
     }
 
     @Test
